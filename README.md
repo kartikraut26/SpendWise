@@ -1,43 +1,39 @@
-# SpendWise – Personal Finance Tracker Web Application
+# SpendWise
 
-SpendWise is a web-based personal finance management platform that allows users to plan, track, and analyze their income, expenses, budgets, and subscriptions.
+SpendWise is a Personal Finance Tracker Web Application.
 
 ## Technology Stack
 
-- Frontend: Vue.js 3
-- Backend: Node.js + Express.js
-- Database: MongoDB
-- Frontend–Backend Communication: REST API
-- Authentication: Keycloak + JWT
-- Data Visualization: Chart.js
-- UI & Styling: Tailwind CSS + Glassmorphism
-- Version Control: Git and GitHub
+### Frontend
+- Vue.js 3
+- Vue Router
+- Pinia
+- Axios
+- Tailwind CSS
+- Chart.js
 
-## Main Modules
+### Backend
+- Node.js
+- Express.js
+- REST API
+- Mongoose
 
-1. Authentication
-2. Dashboard
-3. Transactions
-4. Categories
-5. Budget
-6. Subscriptions
-7. Reports
-8. Settings / User Profile
+### Database
+- MongoDB
 
-## Repository Structure
+### Authentication
+- Keycloak
+- JWT
 
-```text
-SpendWise/
-├── frontend/
-├── backend/
-├── docs/
-├── .gitignore
-├── README.md
-└── CONTRIBUTING.md
-```
+## Project Structure
 
-## Development
+- `frontend/` — Vue.js frontend
+- `backend/` — Express.js backend
+- `docs/` — Project documentation
 
-The frontend and backend are maintained separately. Feature development is performed through Git branches and merged after review/testing.
+## Team Modules
 
-See the documentation in `docs/` for architecture, API conventions, authentication, database design, development workflow, and module ownership.
+- Member 1 — Architecture, Authentication, Profile, Dashboard
+- Member 2 — Transactions, Categories
+- Member 3 — Budget, Subscriptions
+- Member 4 — Reports, Analytics
