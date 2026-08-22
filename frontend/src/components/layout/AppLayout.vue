@@ -1,27 +1,26 @@
 <template>
   <div class="app-shell">
 
-    <!-- Sidebar -->
     <Sidebar
       :is-open="sidebarOpen"
       @close="sidebarOpen = false"
     />
 
-    <!-- Mobile overlay -->
-    <div
-      v-if="sidebarOpen"
-      class="sidebar-overlay"
-      @click="sidebarOpen = false"
-    ></div>
+    <Transition name="fade">
+      <div
+        v-if="sidebarOpen"
+        class="mobile-overlay"
+        @click="sidebarOpen = false"
+      ></div>
+    </Transition>
 
-    <!-- Main area -->
-    <div class="app-main">
+    <div class="app-content">
 
       <Navbar
         @toggle-sidebar="sidebarOpen = !sidebarOpen"
       />
 
-      <main class="app-content">
+      <main class="page-content">
         <RouterView />
       </main>
 
@@ -40,38 +39,69 @@ const sidebarOpen = ref(false)
 
 <style scoped>
 .app-shell {
-  min-height: 100vh;
-}
-
-.app-main {
+  width: 100%;
   min-height: 100vh;
 
-  margin-left: 266px;
+  overflow-x: hidden;
 }
 
 .app-content {
-  min-height: calc(100vh - 72px);
+  width: calc(100% - 250px);
+  min-width: 0;
+  min-height: 100vh;
+
+  margin-left: 250px;
 }
 
-.sidebar-overlay {
+.page-content {
+  width: 100%;
+  min-width: 0;
+
+  overflow-x: hidden;
+}
+
+/* ================================
+   MOBILE
+================================ */
+
+.mobile-overlay {
   display: none;
 }
 
 @media (max-width: 900px) {
-  .app-main {
+  .app-content {
+    width: 100%;
+    min-width: 0;
+
     margin-left: 0;
   }
 
-  .sidebar-overlay {
+  .mobile-overlay {
     display: block;
 
     position: fixed;
     inset: 0;
-    z-index: 45;
 
-    background: rgba(15, 23, 42, 0.45);
+    z-index: 90;
 
-    backdrop-filter: blur(2px);
+    background: rgba(2, 6, 23, 0.55);
+
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
   }
+}
+
+/* ================================
+   TRANSITION
+================================ */
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+const STORAGE_KEY = 'spendwise-theme'
+
 export const useThemeStore = defineStore('theme', () => {
   const isDark = ref(false)
 
@@ -13,11 +15,20 @@ export const useThemeStore = defineStore('theme', () => {
 
   function toggleTheme() {
     isDark.value = !isDark.value
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      isDark.value ? 'dark' : 'light'
+    )
+
     applyTheme()
   }
 
   function initializeTheme() {
-    isDark.value = false
+    const savedTheme = localStorage.getItem(STORAGE_KEY)
+
+    isDark.value = savedTheme === 'dark'
+
     applyTheme()
   }
 

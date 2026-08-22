@@ -3,112 +3,175 @@
     class="sidebar"
     :class="{ 'sidebar-open': isOpen }"
   >
+
     <div class="sidebar-inner">
 
       <!-- Brand -->
-      <div class="sidebar-brand">
-        <div class="brand-icon">
+
+      <div class="brand">
+
+        <div class="brand-mark">
           S
         </div>
 
-        <div>
-          <h1>SpendWise</h1>
-          <p>Finance Tracker</p>
+        <div class="brand-text">
+
+          <strong>
+            SpendWise
+          </strong>
+
+          <span>
+            Personal Finance
+          </span>
+
         </div>
+
       </div>
 
-      <!-- Navigation -->
-      <nav class="sidebar-nav">
 
-        <p class="nav-section-title">
+      <!-- Navigation -->
+
+      <nav>
+
+        <p class="section-title">
           MAIN
         </p>
+
 
         <RouterLink
           to="/dashboard"
           class="nav-item"
-          @click="closeMobile"
+          @click="close"
         >
-          <span class="nav-icon">⌂</span>
+          <LayoutDashboard :size="18" />
           <span>Dashboard</span>
         </RouterLink>
+
 
         <RouterLink
           to="/transactions"
           class="nav-item"
-          @click="closeMobile"
+          @click="close"
         >
-          <span class="nav-icon">↕</span>
+          <ArrowLeftRight :size="18" />
           <span>Transactions</span>
         </RouterLink>
+
 
         <RouterLink
           to="/categories"
           class="nav-item"
-          @click="closeMobile"
+          @click="close"
         >
-          <span class="nav-icon">▦</span>
+          <Tags :size="18" />
           <span>Categories</span>
         </RouterLink>
+
 
         <RouterLink
           to="/budget"
           class="nav-item"
-          @click="closeMobile"
+          @click="close"
         >
-          <span class="nav-icon">◫</span>
+          <WalletCards :size="18" />
           <span>Budget</span>
         </RouterLink>
+
 
         <RouterLink
           to="/subscriptions"
           class="nav-item"
-          @click="closeMobile"
+          @click="close"
         >
-          <span class="nav-icon">↻</span>
+          <RefreshCw :size="18" />
           <span>Subscriptions</span>
         </RouterLink>
 
-        <p class="nav-section-title">
-          ANALYTICS
+
+        <p class="section-title">
+          INSIGHTS
         </p>
+
 
         <RouterLink
           to="/reports"
           class="nav-item"
-          @click="closeMobile"
+          @click="close"
         >
-          <span class="nav-icon">▥</span>
+          <BarChart3 :size="18" />
           <span>Reports</span>
         </RouterLink>
 
-        <p class="nav-section-title">
+
+        <p class="section-title">
           ACCOUNT
         </p>
+
 
         <RouterLink
           to="/profile"
           class="nav-item"
-          @click="closeMobile"
+          @click="close"
         >
-          <span class="nav-icon">◉</span>
+          <UserCircle :size="18" />
           <span>Profile</span>
         </RouterLink>
 
       </nav>
 
+
       <!-- Bottom -->
-      <div class="sidebar-footer">
-        <div class="sidebar-version">
-          SpendWise v1.0
+
+      <div class="sidebar-bottom">
+
+        <button
+          type="button"
+          class="settings-button"
+        >
+          <Settings :size="17" />
+          <span>Settings</span>
+        </button>
+
+
+        <div class="sidebar-footer">
+
+          <div class="footer-dot"></div>
+
+          <div>
+
+            <strong>
+              SpendWise
+            </strong>
+
+            <span>
+              v1.0 · Local Mode
+            </span>
+
+          </div>
+
         </div>
+
       </div>
 
     </div>
+
   </aside>
 </template>
 
+
 <script setup>
+import {
+  ArrowLeftRight,
+  BarChart3,
+  LayoutDashboard,
+  RefreshCw,
+  Settings,
+  Tags,
+  UserCircle,
+  WalletCards
+} from 'lucide-vue-next'
+
+
 defineProps({
   isOpen: {
     type: Boolean,
@@ -116,34 +179,47 @@ defineProps({
   }
 })
 
-const emit = defineEmits(['close'])
 
-function closeMobile() {
+const emit = defineEmits([
+  'close'
+])
+
+
+function close() {
   emit('close')
 }
 </script>
 
+
 <style scoped>
+/* =========================================
+   SIDEBAR
+========================================= */
+
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
-  z-index: 50;
+
+  z-index: 100;
 
   width: 250px;
 
-  transform: translateX(0);
+  padding: 14px 0 14px 14px;
 
-  transition: transform 0.3s ease;
+  transition:
+    transform 0.3s ease;
 }
 
 .sidebar-inner {
   display: flex;
   flex-direction: column;
 
+  width: 100%;
   height: 100%;
 
-  margin: 16px 0 16px 16px;
-  padding: 22px 14px;
+  padding: 20px 12px;
+
+  overflow: hidden;
 
   border: 1px solid var(--glass-border);
   border-radius: 22px;
@@ -152,132 +228,227 @@ function closeMobile() {
 
   box-shadow: var(--glass-shadow);
 
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
 }
 
-.sidebar-brand {
+
+/* =========================================
+   BRAND
+========================================= */
+
+.brand {
   display: flex;
   align-items: center;
-  gap: 11px;
+
+  gap: 10px;
+
+  min-width: 0;
 
   padding: 4px 8px 22px;
+
+  border-bottom: 1px solid var(--glass-border);
 }
 
-.brand-icon {
+.brand-mark {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  flex-shrink: 0;
 
   width: 38px;
   height: 38px;
 
   border-radius: 11px;
 
-  background: var(--accent);
+  background:
+    linear-gradient(
+      135deg,
+      #6366f1,
+      #7c3aed
+    );
+
   color: white;
 
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 900;
+
+  box-shadow:
+    0 8px 20px
+    rgba(99, 102, 241, 0.25);
 }
 
-.sidebar-brand h1 {
-  font-size: 1.05rem;
-  font-weight: 800;
+.brand-text {
+  display: flex;
+  flex-direction: column;
 
+  min-width: 0;
+}
+
+.brand-text strong {
   color: var(--app-text);
+
+  font-size: 0.95rem;
 }
 
-.sidebar-brand p {
+.brand-text span {
   margin-top: 2px;
 
-  font-size: 0.7rem;
-
   color: var(--app-text-muted);
+
+  font-size: 0.64rem;
 }
 
-.sidebar-nav {
-  display: flex;
+
+/* =========================================
+   NAVIGATION
+========================================= */
+
+nav {
   flex: 1;
-  flex-direction: column;
-  gap: 5px;
+
+  min-height: 0;
+
+  padding-top: 12px;
 
   overflow-y: auto;
 }
 
-.nav-section-title {
-  margin: 18px 8px 6px;
-
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+.section-title {
+  margin: 18px 8px 7px;
 
   color: var(--app-text-muted);
+
+  font-size: 0.61rem;
+  font-weight: 850;
+
+  letter-spacing: 0.12em;
 }
 
-.nav-item {
+.nav-item,
+.settings-button {
   display: flex;
   align-items: center;
+
   gap: 11px;
 
-  min-height: 44px;
+  width: 100%;
+
+  min-height: 42px;
 
   padding: 0 11px;
 
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: 11px;
+
+  background: transparent;
 
   color: var(--app-text-muted);
 
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-size: 0.79rem;
+  font-weight: 650;
 
   text-decoration: none;
 
+  cursor: pointer;
+
   transition:
     background 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
+    color 0.2s ease;
 }
 
-.nav-item:hover {
-  background: rgba(99, 102, 241, 0.08);
+.nav-item:hover,
+.settings-button:hover {
+  background: var(--accent-soft);
+
   color: var(--app-text);
 }
 
 .nav-item.router-link-active {
-  border-color: rgba(99, 102, 241, 0.15);
+  border-color:
+    rgba(99, 102, 241, 0.14);
 
-  background: rgba(99, 102, 241, 0.12);
+  background:
+    rgba(99, 102, 241, 0.11);
 
   color: var(--accent);
 }
 
-.nav-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
 
-  width: 22px;
+/* =========================================
+   BOTTOM
+========================================= */
 
-  font-size: 1rem;
+.sidebar-bottom {
+  flex-shrink: 0;
+
+  margin-top: auto;
+}
+
+.settings-button {
+  margin-bottom: 12px;
 }
 
 .sidebar-footer {
-  padding-top: 18px;
-}
+  display: flex;
+  align-items: center;
 
-.sidebar-version {
-  padding: 10px;
+  gap: 8px;
+
+  padding: 13px 8px 2px;
 
   border-top: 1px solid var(--glass-border);
-
-  font-size: 0.7rem;
-
-  color: var(--app-text-muted);
 }
 
+.footer-dot {
+  width: 8px;
+  height: 8px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: var(--success);
+
+  box-shadow:
+    0 0 0 4px
+    rgba(16, 185, 129, 0.08);
+}
+
+.sidebar-footer > div:last-child {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+}
+
+.sidebar-footer strong {
+  color: var(--app-text);
+
+  font-size: 0.68rem;
+}
+
+.sidebar-footer span {
+  margin-top: 2px;
+
+  color: var(--app-text-muted);
+
+  font-size: 0.58rem;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
 @media (max-width: 900px) {
+
   .sidebar {
+    width: min(280px, 85vw);
+
+    padding: 10px;
+
     transform: translateX(-110%);
   }
 
@@ -285,8 +456,5 @@ function closeMobile() {
     transform: translateX(0);
   }
 
-  .sidebar-inner {
-    margin: 12px;
-  }
 }
 </style>
