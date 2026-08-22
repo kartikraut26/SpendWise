@@ -1,0 +1,312 @@
+@import "tailwindcss";
+
+/* =========================================================
+   SpendWise Design Tokens
+   ========================================================= */
+
+:root {
+  --app-bg: #f4f7fb;
+  --app-text: #172033;
+  --app-text-muted: #64748b;
+
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(148, 163, 184, 0.28);
+  --glass-shadow: 0 10px 35px rgba(15, 23, 42, 0.08);
+
+  --button-bg: rgba(255, 255, 255, 0.78);
+  --button-border: rgba(148, 163, 184, 0.35);
+  --button-text: #334155;
+
+  --accent: #6366f1;
+}
+
+html[data-theme="dark"] {
+  --app-bg: #07111f;
+  --app-text: #f8fafc;
+  --app-text-muted: #94a3b8;
+
+  --glass-bg: rgba(15, 23, 42, 0.68);
+  --glass-border: rgba(148, 163, 184, 0.18);
+  --glass-shadow: 0 10px 35px rgba(0, 0, 0, 0.28);
+
+  --button-bg: rgba(30, 41, 59, 0.72);
+  --button-border: rgba(148, 163, 184, 0.2);
+  --button-text: #e2e8f0;
+}
+
+/* =========================================================
+   Global Reset
+   ========================================================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  background: var(--app-bg);
+  color: var(--app-text);
+
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+/* =========================================================
+   SpendWise Page Layout
+   ========================================================= */
+
+.spendwise-page {
+  width: 100%;
+  min-height: 100vh;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(99, 102, 241, 0.08),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(14, 165, 233, 0.06),
+      transparent 35%
+    ),
+    var(--app-bg);
+
+  color: var(--app-text);
+
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+.spendwise-container {
+  width: min(100% - 32px, 1152px);
+  margin-inline: auto;
+  padding-block: 32px;
+}
+
+/* =========================================================
+   Header
+   ========================================================= */
+
+.spendwise-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+
+  margin-bottom: 32px;
+}
+
+.spendwise-brand h1 {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+
+  color: var(--app-text);
+}
+
+.spendwise-brand p {
+  margin-top: 8px;
+
+  font-size: 0.95rem;
+  color: var(--app-text-muted);
+}
+
+/* =========================================================
+   Glass Surface
+   ========================================================= */
+
+.glass-surface {
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+
+  background: var(--glass-bg);
+
+  box-shadow: var(--glass-shadow);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+/* =========================================================
+   Main Feature Card
+   ========================================================= */
+
+.spendwise-feature {
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.spendwise-feature-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.spendwise-feature h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--app-text);
+}
+
+.spendwise-feature p {
+  margin-top: 8px;
+  color: var(--app-text-muted);
+}
+
+/* =========================================================
+   Statistics
+   ========================================================= */
+
+.spendwise-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  padding: 24px;
+}
+
+.stat-card-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--app-text-muted);
+}
+
+.stat-card-value {
+  margin-top: 10px;
+
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  line-height: 1.1;
+  font-weight: 800;
+
+  color: var(--app-text);
+}
+
+.stat-card-subtitle {
+  margin-top: 8px;
+
+  font-size: 0.875rem;
+  color: var(--app-text-muted);
+}
+
+/* =========================================================
+   Theme Button
+   ========================================================= */
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 44px;
+  padding: 0 16px;
+
+  border: 1px solid var(--button-border);
+  border-radius: 12px;
+
+  background: var(--button-bg);
+  color: var(--button-text);
+
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background-color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-1px);
+}
+
+.theme-toggle:active {
+  transform: translateY(0);
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .spendwise-container {
+    width: min(100% - 28px, 760px);
+  }
+
+  .spendwise-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .spendwise-container {
+    width: min(100% - 24px, 100%);
+    padding-block: 20px;
+  }
+
+  .spendwise-header {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-bottom: 24px;
+  }
+
+  .theme-toggle {
+    width: 100%;
+  }
+
+  .spendwise-feature {
+    padding: 20px;
+  }
+
+  .spendwise-feature-content {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .spendwise-stats {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .stat-card {
+    padding: 20px;
+  }
+}
