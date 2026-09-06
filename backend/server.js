@@ -1,18 +1,35 @@
 require('dotenv').config()
 
-const express = require('express')
-const cors = require('cors')
-const helmet = require('helmet')
-const morgan = require('morgan')
+
+const express =
+  require('express')
+
+const cors =
+  require('cors')
+
+const helmet =
+  require('helmet')
+
+const morgan =
+  require('morgan')
+
 
 const connectDatabase =
   require('./config/database')
+
 
 const healthRoutes =
   require('./routes/health.routes')
 
 const dashboardRoutes =
   require('./routes/dashboard.routes')
+
+const transactionRoutes =
+  require('./routes/transaction.routes')
+
+const profileRoutes =
+  require('./routes/profile.routes')
+
 
 const notFound =
   require('./middleware/notFound')
@@ -21,10 +38,17 @@ const errorHandler =
   require('./middleware/errorHandler')
 
 
-const app = express()
+const requireAuth =
+  require('./middleware/auth')
+
+
+const app =
+  express()
+
 
 const PORT =
-  process.env.PORT || 5000
+  process.env.PORT ||
+  5000
 
 
 /* =========================================
@@ -42,11 +66,13 @@ app.use(
 
 app.use(
   cors({
+
     origin:
       process.env.FRONTEND_URL ||
       'http://localhost:5173',
 
     credentials: true
+
   })
 )
 
@@ -75,24 +101,37 @@ app.use(
 if (
   process.env.NODE_ENV !== 'test'
 ) {
-  app.use(morgan('dev'))
+
+  app.use(
+    morgan('dev')
+  )
+
 }
 
 
 /* =========================================
-   BASIC ROUTE
+   ROOT
 ========================================= */
 
-app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Welcome to SpendWise API'
-  })
-})
+app.get(
+  '/',
+  (req, res) => {
+
+    res.json({
+
+      success: true,
+
+      message:
+        'Welcome to SpendWise API'
+
+    })
+
+  }
+)
 
 
 /* =========================================
-   API ROUTES
+   PUBLIC HEALTH
 ========================================= */
 
 app.use(
@@ -100,9 +139,29 @@ app.use(
   healthRoutes
 )
 
+
+/* =========================================
+   PROTECTED ROUTES
+========================================= */
+
 app.use(
   '/api/dashboard',
+  requireAuth,
   dashboardRoutes
+)
+
+
+app.use(
+  '/api/transactions',
+  requireAuth,
+  transactionRoutes
+)
+
+
+app.use(
+  '/api/profile',
+  requireAuth,
+  profileRoutes
 )
 
 
@@ -110,9 +169,13 @@ app.use(
    ERROR HANDLING
 ========================================= */
 
-app.use(notFound)
+app.use(
+  notFound
+)
 
-app.use(errorHandler)
+app.use(
+  errorHandler
+)
 
 
 /* =========================================
@@ -120,13 +183,16 @@ app.use(errorHandler)
 ========================================= */
 
 async function startServer() {
+
   try {
 
     await connectDatabase()
 
+
     app.listen(
       PORT,
       () => {
+
         console.log(
           `SpendWise API running on port ${PORT}`
         )
@@ -134,17 +200,21 @@ async function startServer() {
         console.log(
           `http://localhost:${PORT}`
         )
+
       }
     )
 
   } catch (error) {
 
     console.error(
-      'Server startup failed'
+      'Server startup failed:',
+      error
     )
 
     process.exit(1)
+
   }
+
 }
 
 

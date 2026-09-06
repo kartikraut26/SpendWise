@@ -163,30 +163,134 @@
 
 
       <!-- Profile -->
-      <button
-        class="profile"
-        type="button"
-      >
+      <div class="profile-wrapper">
 
-        <div class="avatar">
-          K
-        </div>
+        <button
+          class="profile"
+          type="button"
+          :aria-expanded="showProfileMenu"
+          aria-label="Open account menu"
+          @click="toggleProfileMenu"
+        >
 
-        <div class="profile-info">
+          <div class="avatar">
+            {{ userInitials }}
+          </div>
 
-          <strong>
-            Kartik
-          </strong>
+          <div class="profile-info">
 
-          <span>
-            Personal account
-          </span>
+            <strong>
+              {{ displayName }}
+            </strong>
 
-        </div>
+            <span>
+              Personal account
+            </span>
 
-        <ChevronDown :size="15" />
+          </div>
 
-      </button>
+          <ChevronDown
+            :size="15"
+            :class="{
+              'chevron-open': showProfileMenu
+            }"
+          />
+
+        </button>
+
+
+        <Transition name="dropdown">
+
+          <div
+            v-if="showProfileMenu"
+            class="profile-menu"
+          >
+
+            <!-- Account header -->
+            <div class="profile-menu-header">
+
+              <div class="profile-menu-avatar">
+                {{ userInitials }}
+              </div>
+
+              <div class="profile-menu-user">
+
+                <strong>
+                  {{ displayName }}
+                </strong>
+
+                <span>
+                  {{ userEmail }}
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div class="profile-menu-divider"></div>
+
+
+            <!-- Profile -->
+            <button
+              type="button"
+              class="profile-menu-item"
+              @click="goToProfile"
+            >
+
+              <UserCircle :size="16" />
+
+              <span>
+                Profile
+              </span>
+
+            </button>
+
+
+            <!-- Settings -->
+            <button
+              type="button"
+              class="profile-menu-item"
+              @click="goToSettings"
+            >
+
+              <Settings :size="16" />
+
+              <span>
+                Settings
+              </span>
+
+            </button>
+
+
+            <div class="profile-menu-divider"></div>
+
+
+            <!-- Logout -->
+            <button
+              type="button"
+              class="profile-menu-item logout-item"
+              :disabled="isLoggingOut"
+              @click="handleLogout"
+            >
+
+              <LogOut :size="16" />
+
+              <span>
+                {{
+                  isLoggingOut
+                    ? 'Logging out...'
+                    : 'Log out'
+                }}
+              </span>
+
+            </button>
+
+          </div>
+
+        </Transition>
+
+      </div>
 
     </div>
 
@@ -195,22 +299,38 @@
 
 
 <script setup>
-import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import {
+  computed,
+  ref
+} from 'vue'
+
+import {
+  useRoute,
+  useRouter
+} from 'vue-router'
 
 import {
   Bell,
   ChevronDown,
   CreditCard,
+  LogOut,
   Menu,
   Moon,
   Search,
+  Settings,
   Sun,
   Target,
+  UserCircle,
   WalletCards
 } from 'lucide-vue-next'
 
-import { useThemeStore } from '../../stores/theme'
+import {
+  useThemeStore
+} from '../../stores/theme'
+
+import {
+  useAuthStore
+} from '../../stores/auth'
 
 
 defineEmits([
@@ -219,32 +339,198 @@ defineEmits([
 
 
 const route = useRoute()
+const router = useRouter()
 
-const themeStore = useThemeStore()
+const themeStore =
+  useThemeStore()
 
-const search = ref('')
+const auth =
+  useAuthStore()
 
-const showNotifications = ref(false)
+
+const search =
+  ref('')
+
+const showNotifications =
+  ref(false)
+
+const showProfileMenu =
+  ref(false)
+
+const isLoggingOut =
+  ref(false)
 
 
 const pageTitles = {
-  dashboard: 'Dashboard',
-  transactions: 'Transactions',
-  categories: 'Categories',
-  budget: 'Budget',
-  subscriptions: 'Subscriptions',
-  reports: 'Reports',
-  profile: 'Profile'
+
+  dashboard:
+    'Dashboard',
+
+  transactions:
+    'Transactions',
+
+  categories:
+    'Categories',
+
+  budget:
+    'Budget',
+
+  subscriptions:
+    'Subscriptions',
+
+  reports:
+    'Reports',
+
+  profile:
+    'Profile',
+
+  settings:
+    'Settings'
+
 }
 
 
-const pageTitle = computed(() => {
-  return pageTitles[route.name] || 'SpendWise'
-})
+const pageTitle =
+  computed(() => {
+    return (
+      pageTitles[route.name] ||
+      'SpendWise'
+    )
+  })
+
+
+const displayName =
+  computed(() => {
+
+    return (
+      auth.user?.name ||
+      auth.user?.firstName ||
+      auth.user?.email ||
+      'User'
+    )
+
+  })
+
+
+const userEmail =
+  computed(() => {
+
+    return (
+      auth.user?.email ||
+      ''
+    )
+
+  })
+
+
+const userInitials =
+  computed(() => {
+
+    const name =
+      displayName.value
+
+    const parts =
+      name
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+
+
+    if (
+      parts.length >= 2
+    ) {
+
+      return (
+        `${parts[0][0]}${parts[1][0]}`
+      ).toUpperCase()
+
+    }
+
+
+    return name
+      .slice(0, 2)
+      .toUpperCase()
+
+  })
+
+
+function toggleProfileMenu() {
+
+  showProfileMenu.value =
+    !showProfileMenu.value
+
+  if (
+    showProfileMenu.value
+  ) {
+    showNotifications.value =
+      false
+  }
+
+}
+
+
+function goToProfile() {
+
+  showProfileMenu.value =
+    false
+
+  router.push({
+    name: 'profile'
+  })
+
+}
+
+
+function goToSettings() {
+
+  showProfileMenu.value =
+    false
+
+  router.push({
+    name: 'settings'
+  })
+
+}
+
+
+async function handleLogout() {
+
+  if (
+    isLoggingOut.value
+  ) {
+    return
+  }
+
+
+  isLoggingOut.value =
+    true
+
+  showProfileMenu.value =
+    false
+
+
+  try {
+
+    await auth.logout()
+
+  } catch (error) {
+
+    console.error(
+      'Logout failed:',
+      error
+    )
+
+    isLoggingOut.value =
+      false
+
+  }
+
+}
 </script>
 
 
 <style scoped>
+
 /* =========================================
    NAVBAR
 ========================================= */
@@ -575,6 +861,10 @@ const pageTitle = computed(() => {
    PROFILE
 ========================================= */
 
+.profile-wrapper {
+  position: relative;
+}
+
 .profile {
   display: flex;
   align-items: center;
@@ -632,6 +922,13 @@ const pageTitle = computed(() => {
   color: var(--app-text);
 
   font-size: 0.68rem;
+
+  max-width: 120px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .profile-info span {
@@ -644,10 +941,177 @@ const pageTitle = computed(() => {
 
 
 /* =========================================
+   PROFILE DROPDOWN
+========================================= */
+
+.profile-menu {
+  position: absolute;
+
+  top: calc(100% + 10px);
+  right: 0;
+
+  z-index: 100;
+
+  width: 270px;
+
+  padding: 10px;
+
+  border: 1px solid var(--glass-border);
+  border-radius: 15px;
+
+  background: var(--modal-bg);
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.2);
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.profile-menu-header {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 9px;
+}
+
+.profile-menu-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  width: 38px;
+  height: 38px;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      135deg,
+      #6366f1,
+      #7c3aed
+    );
+
+  color: white;
+
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.profile-menu-user {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  gap: 3px;
+}
+
+.profile-menu-user strong {
+  overflow: hidden;
+
+  color: var(--app-text);
+
+  font-size: 0.75rem;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-menu-user span {
+  overflow: hidden;
+
+  color: var(--app-text-muted);
+
+  font-size: 0.62rem;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-menu-divider {
+  height: 1px;
+
+  margin: 6px 4px;
+
+  background: var(--glass-border);
+}
+
+.profile-menu-item {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+
+  gap: 10px;
+
+  min-height: 40px;
+
+  padding: 0 10px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: transparent;
+
+  color: var(--app-text);
+
+  font-size: 0.72rem;
+  font-weight: 650;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.profile-menu-item:hover {
+  background: var(--accent-soft);
+}
+
+.profile-menu-item svg {
+  flex-shrink: 0;
+
+  color: var(--app-text-muted);
+}
+
+.profile-menu-item.logout-item {
+  color: var(--danger);
+}
+
+.profile-menu-item.logout-item svg {
+  color: var(--danger);
+}
+
+.profile-menu-item:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
+
+.profile > svg {
+  transition:
+    transform 0.2s ease;
+}
+
+.profile > svg.chevron-open {
+  transform: rotate(180deg);
+}
+
+
+/* =========================================
    TABLET
 ========================================= */
 
 @media (max-width: 1100px) {
+
   .navbar {
     padding: 0 22px;
   }
@@ -655,6 +1119,7 @@ const pageTitle = computed(() => {
   .search-box {
     width: 180px;
   }
+
 }
 
 
@@ -705,6 +1170,7 @@ const pageTitle = computed(() => {
   .navbar-actions {
     gap: 5px;
   }
+
 }
 
 
@@ -755,6 +1221,17 @@ const pageTitle = computed(() => {
     width: calc(100vw - 20px);
     max-width: 320px;
   }
+
+  .profile-menu {
+    position: fixed;
+
+    top: 70px;
+    right: 10px;
+
+    width: calc(100vw - 20px);
+    max-width: 270px;
+  }
+
 }
 
 
@@ -775,4 +1252,5 @@ const pageTitle = computed(() => {
 
   transform: translateY(-5px);
 }
+
 </style>

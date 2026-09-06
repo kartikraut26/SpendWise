@@ -1,40 +1,126 @@
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
 
 const STORAGE_KEY = 'spendwise-theme'
 
-export const useThemeStore = defineStore('theme', () => {
-  const isDark = ref(false)
 
-  function applyTheme() {
-    document.documentElement.setAttribute(
-      'data-theme',
-      isDark.value ? 'dark' : 'light'
+function getSavedTheme() {
+  const savedTheme =
+    localStorage.getItem(STORAGE_KEY)
+
+  if (
+    savedTheme === 'dark' ||
+    savedTheme === 'light'
+  ) {
+    return savedTheme
+  }
+
+  return 'light'
+}
+
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute(
+    'data-theme',
+    theme
+  )
+}
+
+
+export const useThemeStore = defineStore(
+  'theme',
+  () => {
+
+    const theme = ref(
+      getSavedTheme()
     )
-  }
 
-  function toggleTheme() {
-    isDark.value = !isDark.value
 
-    localStorage.setItem(
-      STORAGE_KEY,
-      isDark.value ? 'dark' : 'light'
+    const isDark = computed(
+      () => theme.value === 'dark'
     )
 
-    applyTheme()
+
+    /*
+     * Initialize the application theme.
+     *
+     * App.vue calls this when the application
+     * starts, so this function MUST exist.
+     */
+    function initializeTheme() {
+
+      const savedTheme =
+        getSavedTheme()
+
+      theme.value =
+        savedTheme
+
+      applyTheme(
+        savedTheme
+      )
+
+      return savedTheme
+    }
+
+
+    /*
+     * Change the theme explicitly.
+     */
+    function setTheme(
+      newTheme
+    ) {
+
+      if (
+        newTheme !== 'dark' &&
+        newTheme !== 'light'
+      ) {
+        return
+      }
+
+      theme.value =
+        newTheme
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        newTheme
+      )
+
+      applyTheme(
+        newTheme
+      )
+    }
+
+
+    /*
+     * Toggle between light and dark.
+     */
+    function toggleTheme() {
+
+      setTheme(
+        isDark.value
+          ? 'light'
+          : 'dark'
+      )
+    }
+
+
+    /*
+     * Make sure the current theme is
+     * applied as soon as the store is created.
+     */
+    applyTheme(
+      theme.value
+    )
+
+
+    return {
+      theme,
+      isDark,
+
+      initializeTheme,
+      setTheme,
+      toggleTheme
+    }
+
   }
-
-  function initializeTheme() {
-    const savedTheme = localStorage.getItem(STORAGE_KEY)
-
-    isDark.value = savedTheme === 'dark'
-
-    applyTheme()
-  }
-
-  return {
-    isDark,
-    toggleTheme,
-    initializeTheme
-  }
-})
+)

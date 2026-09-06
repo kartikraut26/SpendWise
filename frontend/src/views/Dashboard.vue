@@ -14,7 +14,7 @@
         </p>
 
         <h1>
-          Good evening, Kartik <span>👋</span>
+          Good evening, {{ displayName }} <span>👋</span>
         </h1>
 
         <p class="welcome-subtitle">
@@ -588,7 +588,7 @@
 
 
 <script setup>
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import {
   ArrowDownRight,
@@ -608,15 +608,44 @@ import {
 } from 'lucide-vue-next'
 
 import { useFinanceStore } from '../stores/finance'
+import { useAuthStore } from '../stores/auth'
+import api from '../services/api'
 
 import AddTransactionModal
   from '../components/ui/AddTransactionModal.vue'
 
 
 const finance = useFinanceStore()
+const auth = useAuthStore()
+
+const currency = ref('INR')
+
+const displayName = computed(() =>
+  auth.user?.firstName ||
+  auth.user?.name?.split(' ')[0] ||
+  auth.user?.email ||
+  'there'
+)
 
 const showTransactionModal = ref(false)
 
+onMounted(async () => {
+  if (!auth.isAuthenticated) return
+
+  try {
+    await Promise.all([
+      finance.fetchTransactions(),
+      loadAccountPreferences()
+    ])
+  } catch (error) {
+    console.error('Failed to load dashboard data:', error)
+  }
+})
+
+async function loadAccountPreferences() {
+  const response = await api.get('/profile/me')
+  currency.value = response.data.data?.preferences?.currency || 'INR'
+}
 
 const chartBars = [
   35,
@@ -670,7 +699,7 @@ function formatCurrency(value) {
     'en-IN',
     {
       style: 'currency',
-      currency: 'INR',
+      currency: currency.value,
       maximumFractionDigits: 0
     }
   ).format(value)
@@ -684,11 +713,21 @@ function budgetPercent(budget) {
 }
 
 
-function handleAddTransaction(transaction) {
+async function handleAddTransaction(transaction) {
+  try {
+    await finance.addTransaction(transaction)
 
-  finance.addTransaction(transaction)
+    showTransactionModal.value = false
+  } catch (error) {
+    console.error(
+      'Could not add transaction:',
+      error
+    )
 
-  showTransactionModal.value = false
+    alert(
+      'Could not add transaction. Please try again.'
+    )
+  }
 }
 </script>
 

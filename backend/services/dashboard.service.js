@@ -1,14 +1,21 @@
-const Transaction = require('../models/Transaction')
+const Transaction =
+  require('../models/Transaction')
+
 
 async function getDashboardSummary(userId) {
-  const transactions = await Transaction
-    .find({ userId })
-    .sort({ date: -1 })
+
+  const transactions =
+    await Transaction
+      .find({ userId })
+      .sort({ date: -1 })
+
 
   let totalIncome = 0
   let totalExpenses = 0
 
+
   for (const transaction of transactions) {
+
     if (transaction.type === 'income') {
       totalIncome += transaction.amount
     }
@@ -16,27 +23,46 @@ async function getDashboardSummary(userId) {
     if (transaction.type === 'expense') {
       totalExpenses += transaction.amount
     }
+
   }
+
 
   const totalBalance =
     totalIncome - totalExpenses
 
+
+  const savingsPercentage =
+    totalIncome > 0
+      ? Math.round(
+          (totalBalance / totalIncome) * 100
+        )
+      : 0
+
+
   const recentTransactions =
     transactions.slice(0, 5)
 
+
   return {
+
     totalBalance,
+
     totalIncome,
+
     totalExpenses,
 
     savings: totalBalance,
+
+    savingsPercentage,
 
     transactionCount:
       transactions.length,
 
     recentTransactions
+
   }
 }
+
 
 module.exports = {
   getDashboardSummary
