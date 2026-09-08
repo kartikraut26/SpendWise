@@ -30,6 +30,9 @@ const transactionRoutes =
 const profileRoutes =
   require('./routes/profile.routes')
 
+const reportRoutes =
+  require('./routes/report.routes')
+
 
 const notFound =
   require('./middleware/notFound')
@@ -164,6 +167,11 @@ app.use(
   profileRoutes
 )
 
+app.use(
+  '/api/reports',
+  requireAuth,
+  reportRoutes
+)
 
 /* =========================================
    ERROR HANDLING
