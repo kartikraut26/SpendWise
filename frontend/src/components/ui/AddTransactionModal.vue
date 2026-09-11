@@ -148,7 +148,7 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { computed, reactive } from 'vue'
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -157,11 +157,9 @@ import {
   X
 } from 'lucide-vue-next'
 
-defineProps({
-  open: {
-    type: Boolean,
-    default: false
-  }
+const props = defineProps({
+  open: { type: Boolean, default: false },
+  categories: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits([
@@ -169,16 +167,11 @@ const emit = defineEmits([
   'submit'
 ])
 
-const categories = [
-  'Food',
-  'Transport',
-  'Shopping',
-  'Bills',
-  'Entertainment',
-  'Health',
-  'Other',
-  'Income'
-]
+const fallbackCategories = ['Food', 'Transport', 'Shopping', 'Bills', 'Entertainment', 'Health', 'Other', 'Salary']
+const categories = computed(() => {
+  const source = props.categories.length ? props.categories : fallbackCategories.map(name => ({ name }))
+  return source.filter(category => category.type ? category.type === form.type : true)
+})
 
 const form = reactive({
   type: 'expense',

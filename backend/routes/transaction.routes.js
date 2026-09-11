@@ -1,50 +1,17 @@
-const express =
-  require('express')
-
+const express = require('express')
 const {
   getTransactions,
-  createTransaction
-} =
-  require(
-    '../controllers/transaction.controller'
-  )
+  createTransaction,
+  updateTransaction,
+  deleteTransaction
+} = require('../controllers/transaction.controller')
+const asyncHandler = require('../utils/asyncHandler')
 
-const asyncHandler =
-  require('../utils/asyncHandler')
+const router = express.Router()
 
-const requireAuth =
-  require('../middleware/auth')
+router.get('/', asyncHandler(getTransactions))
+router.post('/', asyncHandler(createTransaction))
+router.patch('/:id', asyncHandler(updateTransaction))
+router.delete('/:id', asyncHandler(deleteTransaction))
 
-
-const router =
-  express.Router()
-
-
-router.get(
-
-  '/',
-
-  requireAuth,
-
-  asyncHandler(
-    getTransactions
-  )
-
-)
-
-
-router.post(
-
-  '/',
-
-  requireAuth,
-
-  asyncHandler(
-    createTransaction
-  )
-
-)
-
-
-module.exports =
-  router
+module.exports = router

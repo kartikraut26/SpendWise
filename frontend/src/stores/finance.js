@@ -1,501 +1,133 @@
-import {
-  computed,
-  ref
-} from 'vue'
-
-import {
-  defineStore
-} from 'pinia'
-
+import { computed, ref } from 'vue'
+import { defineStore } from 'pinia'
 import api from '../services/api'
 
-
-export const useFinanceStore =
-  defineStore(
-    'finance',
-    () => {
-
-      const transactions =
-        ref([])
-
-
-      const budgets =
-        ref([
-          {
-            category: 'Food',
-            spent: 7200,
-            limit: 10000
-          },
-
-          {
-            category: 'Transport',
-            spent: 2250,
-            limit: 5000
-          },
-
-          {
-            category: 'Entertainment',
-            spent: 1800,
-            limit: 3000
-          }
-        ])
-
-
-      const savingsGoal =
-        ref({
-          title: 'New Laptop',
-
-          current: 45000,
-
-          target: 60000
-        })
-
-
-      const totalIncome =
-        computed(() =>
-
-          transactions.value
-
-            .filter(
-              transaction =>
-                transaction.type ===
-                'income'
-            )
-
-            .reduce(
-              (
-                total,
-                transaction
-              ) =>
-                total +
-                Number(
-                  transaction.amount
-                ),
-
-              0
-            )
-        )
-
-
-      const totalExpenses =
-        computed(() =>
-
-          transactions.value
-
-            .filter(
-              transaction =>
-                transaction.type ===
-                'expense'
-            )
-
-            .reduce(
-              (
-                total,
-                transaction
-              ) =>
-                total +
-                Number(
-                  transaction.amount
-                ),
-
-              0
-            )
-        )
-
-
-      const totalBalance =
-        computed(
-          () =>
-            totalIncome.value -
-            totalExpenses.value
-        )
-
-
-      const savings =
-        computed(() =>
-          Math.max(
-            totalBalance.value,
-            0
-          )
-        )
-
-
-      const savingsPercentage =
-        computed(() => {
-
-          if (
-            savingsGoal.value.target <=
-            0
-          ) {
-            return 0
-          }
-
-          return Math.min(
-
-            Math.round(
-
-              (
-                savingsGoal.value.current /
-                savingsGoal.value.target
-              ) * 100
-
-            ),
-
-            100
-          )
-        })
-
-
-      async function fetchTransactions() {
-
-        try {
-
-          const response =
-            await api.get(
-              '/transactions'
-            )
-
-
-          const data =
-            response.data.data ||
-            []
-
-
-          transactions.value =
-            data.map(
-              transaction => ({
-
-                id:
-                  transaction._id,
-
-                title:
-                  transaction.description,
-
-                category:
-                  transaction.categoryId ||
-                  'Other',
-
-                amount:
-                  Number(
-                    transaction.amount
-                  ),
-
-                type:
-                  transaction.type,
-
-                date:
-                  formatDate(
-                    transaction.date
-                  ),
-
-                icon:
-                  getTransactionIcon(
-                    transaction.categoryId,
-                    transaction.type
-                  )
-              })
-            )
-
-        } catch (error) {
-
-          console.error(
-            'Failed to fetch dashboard transactions:',
-            error
-          )
-
-          transactions.value = []
-
-          throw error
-        }
-      }
-
-
-      async function addTransaction(
-        transaction
-      ) {
-
-        try {
-
-          const response =
-            await api.post(
-
-              '/transactions',
-
-              {
-
-                type:
-                  transaction.type,
-
-                amount:
-                  Number(
-                    transaction.amount
-                  ),
-
-                description:
-                  transaction.description,
-
-                categoryId:
-                  transaction.categoryId ||
-                  transaction.category ||
-                  'Other',
-
-                date:
-                  transaction.date ||
-                  new Date()
-                    .toISOString()
-              }
-            )
-
-
-          const created =
-            response.data.data
-
-
-          const formattedTransaction =
-            {
-
-              id:
-                created._id,
-
-              title:
-                created.description,
-
-              category:
-                created.categoryId ||
-                'Other',
-
-              amount:
-                Number(
-                  created.amount
-                ),
-
-              type:
-                created.type,
-
-              date:
-                formatDate(
-                  created.date
-                ),
-
-              icon:
-                getTransactionIcon(
-                  created.categoryId,
-                  created.type
-                )
-            }
-
-
-          transactions.value.unshift(
-            formattedTransaction
-          )
-
-
-          updateBudget(
-            formattedTransaction
-          )
-
-
-          return formattedTransaction
-
-        } catch (error) {
-
-          console.error(
-            'Failed to add transaction:',
-            error
-          )
-
-          throw error
-        }
-      }
-
-
-      function updateBudget(
-        transaction
-      ) {
-
-        if (
-          transaction.type !==
-          'expense'
-        ) {
-          return
-        }
-
-
-        const category =
-          normaliseCategory(
-            transaction.category
-          )
-
-
-        const budget =
-          budgets.value.find(
-
-            item =>
-
-              normaliseCategory(
-                item.category
-              ) === category
-          )
-
-
-        if (budget) {
-
-          budget.spent +=
-            Number(
-              transaction.amount
-            )
-        }
-      }
-
-
-      function normaliseCategory(
-        category
-      ) {
-
-        return String(
-          category || ''
-        )
-
-          .toLowerCase()
-
-          .replace(
-            /\s+/g,
-            ''
-          )
-      }
-
-
-      function getTransactionIcon(
-        category,
-        type
-      ) {
-
-        if (
-          type === 'income'
-        ) {
-          return 'wallet'
-        }
-
-
-        const value =
-          String(
-            category || ''
-          ).toLowerCase()
-
-
-        if (
-          value.includes('food') ||
-          value.includes('grocery')
-        ) {
-          return 'food'
-        }
-
-
-        if (
-          value.includes('transport') ||
-          value.includes('petrol') ||
-          value.includes('travel')
-        ) {
-          return 'transport'
-        }
-
-
-        if (
-          value.includes(
-            'subscription'
-          ) ||
-          value.includes(
-            'netflix'
-          ) ||
-          value.includes(
-            'entertainment'
-          )
-        ) {
-          return 'subscription'
-        }
-
-
-        return 'receipt'
-      }
-
-
-      function formatDate(
-        date
-      ) {
-
-        if (!date) {
-          return 'Today'
-        }
-
-
-        const transactionDate =
-          new Date(date)
-
-
-        const today =
-          new Date()
-
-
-        if (
-          transactionDate
-            .toDateString() ===
-          today.toDateString()
-        ) {
-          return 'Today'
-        }
-
-
-        const yesterday =
-          new Date(today)
-
-
-        yesterday.setDate(
-          today.getDate() - 1
-        )
-
-
-        if (
-          transactionDate
-            .toDateString() ===
-          yesterday.toDateString()
-        ) {
-          return 'Yesterday'
-        }
-
-
-        return transactionDate
-          .toLocaleDateString(
-            'en-IN',
-            {
-              day: 'numeric',
-              month: 'short'
-            }
-          )
-      }
-
-
-      return {
-
-        transactions,
-
-        budgets,
-
-        savingsGoal,
-
-        totalIncome,
-
-        totalExpenses,
-
-        totalBalance,
-
-        savings,
-
-        savingsPercentage,
-
-        fetchTransactions,
-
-        addTransaction
-      }
-
-    }
+function mapTransaction(t) {
+  return {
+    id: t._id,
+    title: t.description,
+    description: t.description,
+    category: t.categoryId || 'Uncategorized',
+    categoryId: t.categoryId || null,
+    amount: Number(t.amount),
+    type: t.type,
+    date: t.date,
+    dateLabel: formatDate(t.date),
+    icon: getTransactionIcon(t.categoryId, t.type)
+  }
+}
+
+function formatDate(date) {
+  if (!date) return ''
+  const d = new Date(date)
+  const today = new Date()
+  if (d.toDateString() === today.toDateString()) return 'Today'
+  const yesterday = new Date(today)
+  yesterday.setDate(today.getDate() - 1)
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function getTransactionIcon(category, type) {
+  if (type === 'income') return 'wallet'
+  const value = String(category || '').toLowerCase()
+  if (value.includes('food') || value.includes('grocery')) return 'food'
+  if (value.includes('transport') || value.includes('petrol') || value.includes('travel')) return 'transport'
+  if (value.includes('subscription') || value.includes('entertainment')) return 'subscription'
+  return 'receipt'
+}
+
+export const useFinanceStore = defineStore('finance', () => {
+  const transactions = ref([])
+  const categories = ref([])
+  const budgets = ref([])
+  const subscriptions = ref([])
+  const loading = ref(false)
+
+  const totalIncome = computed(() =>
+    transactions.value.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount), 0)
   )
+  const totalExpenses = computed(() =>
+    transactions.value.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0)
+  )
+  const totalBalance = computed(() => totalIncome.value - totalExpenses.value)
+  const savings = computed(() => Math.max(totalBalance.value, 0))
+  const savingsPercentage = computed(() =>
+    totalIncome.value > 0 ? Math.max(0, Math.round((totalBalance.value / totalIncome.value) * 100)) : 0
+  )
+
+  async function fetchTransactions(params = {}) {
+    loading.value = true
+    try {
+      const response = await api.get('/transactions', { params })
+      transactions.value = (response.data.data || []).map(mapTransaction)
+      return transactions.value
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function addTransaction(transaction) {
+    const response = await api.post('/transactions', {
+      type: transaction.type,
+      amount: Number(transaction.amount),
+      description: transaction.description || transaction.title,
+      categoryId: transaction.categoryId || transaction.category || null,
+      date: transaction.date
+    })
+    const created = mapTransaction(response.data.data)
+    transactions.value = [created, ...transactions.value]
+    return created
+  }
+
+  async function updateTransaction(id, transaction) {
+    const response = await api.patch(`/transactions/${id}`, {
+      type: transaction.type,
+      amount: Number(transaction.amount),
+      description: transaction.description || transaction.title,
+      categoryId: transaction.categoryId || transaction.category || null,
+      date: transaction.date
+    })
+    const updated = mapTransaction(response.data.data)
+    const index = transactions.value.findIndex(t => t.id === id)
+    if (index >= 0) transactions.value[index] = updated
+    return updated
+  }
+
+  async function deleteTransaction(id) {
+    await api.delete(`/transactions/${id}`)
+    transactions.value = transactions.value.filter(t => t.id !== id)
+  }
+
+  async function fetchCategories() {
+    const response = await api.get('/categories')
+    categories.value = response.data.data || []
+    return categories.value
+  }
+
+  async function fetchBudgets(month) {
+    const response = await api.get('/budgets', { params: month ? { month } : {} })
+    budgets.value = (response.data.data || []).map(b => ({
+      ...b,
+      id: b._id,
+      category: b.categoryId === 'overall' ? 'Overall' : b.categoryId,
+      limit: Number(b.amount),
+      spent: Number(b.spent || 0),
+      remaining: Number(b.remaining ?? Math.max(Number(b.amount) - Number(b.spent || 0), 0))
+    }))
+    return budgets.value
+  }
+
+  async function fetchSubscriptions() {
+    const response = await api.get('/subscriptions')
+    subscriptions.value = response.data.data || []
+    return subscriptions.value
+  }
+
+  return {
+    transactions, categories, budgets, subscriptions, loading,
+    totalIncome, totalExpenses, totalBalance, savings, savingsPercentage,
+    fetchTransactions, addTransaction, updateTransaction, deleteTransaction,
+    fetchCategories, fetchBudgets, fetchSubscriptions
+  }
+})
