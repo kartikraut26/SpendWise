@@ -44,6 +44,9 @@ const errorHandler =
 const requireAuth =
   require('./middleware/auth')
 
+const budgetRoutes = require('./routes/budget.routes')
+const subscriptionRoutes = require('./routes/subscription.routes')
+
 
 const app =
   express()
@@ -171,6 +174,18 @@ app.use(
   '/api/reports',
   requireAuth,
   reportRoutes
+)
+
+app.use(
+  '/api/budgets', 
+  requireAuth, 
+  budgetRoutes
+)
+
+app.use(
+  '/api/subscriptions', 
+  requireAuth, 
+  subscriptionRoutes
 )
 
 /* =========================================
