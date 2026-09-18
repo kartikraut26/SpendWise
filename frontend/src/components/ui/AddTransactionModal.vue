@@ -88,10 +88,10 @@
                 >
                   <option
                     v-for="category in categories"
-                    :key="category"
-                    :value="category"
+                    :key="category._id || category.name"
+                    :value="category.name"
                   >
-                    {{ category }}
+                    {{ category.name }}
                   </option>
                 </select>
               </label>

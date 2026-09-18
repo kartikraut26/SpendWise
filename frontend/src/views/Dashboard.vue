@@ -58,7 +58,7 @@
           <TrendingUp :size="15" />
 
           <strong>
-            12.5%
+            {{ balanceChangeLabel }}
           </strong>
 
           <span>
@@ -100,8 +100,8 @@
             <ArrowUpRight :size="19" />
           </div>
 
-          <span class="stat-badge positive">
-            +8.2%
+          <span class="stat-badge" :class="incomeChange >= 0 ? 'positive' : 'negative'">
+            {{ formatChange(incomeChange) }}
           </span>
 
         </div>
@@ -111,7 +111,7 @@
         </p>
 
         <h2>
-          {{ formatCurrency(finance.totalIncome) }}
+          {{ formatCurrency(periodIncome) }}
         </h2>
 
         <p class="stat-note">
@@ -131,8 +131,8 @@
             <ArrowDownRight :size="19" />
           </div>
 
-          <span class="stat-badge negative">
-            -3.4%
+          <span class="stat-badge" :class="expenseChange <= 0 ? 'positive' : 'negative'">
+            {{ formatChange(expenseChange) }}
           </span>
 
         </div>
@@ -142,7 +142,7 @@
         </p>
 
         <h2>
-          {{ formatCurrency(finance.totalExpenses) }}
+          {{ formatCurrency(periodExpense) }}
         </h2>
 
         <p class="stat-note">
@@ -163,7 +163,7 @@
           </div>
 
           <span class="stat-badge neutral">
-            {{ finance.savingsPercentage }}%
+            {{ periodSavingsPercentage }}%
           </span>
 
         </div>
@@ -173,11 +173,11 @@
         </p>
 
         <h2>
-          {{ formatCurrency(finance.savingsGoal.current) }}
+          {{ formatCurrency(periodSavings) }}
         </h2>
 
         <p class="stat-note">
-          of {{ formatCurrency(finance.savingsGoal.target) }}
+          {{ periodSavingsPercentage }}% of total income
         </p>
 
       </div>
@@ -207,13 +207,20 @@
             </h3>
           </div>
 
-          <button
-            type="button"
-            class="period-button"
-          >
-            This month
-            <ChevronDown :size="15" />
-          </button>
+          <label class="period-select-wrap">
+            <select
+              v-model.number="reportMonths"
+              class="period-select"
+              aria-label="Report period"
+              @change="loadDashboardReport"
+            >
+              <option :value="1">This month</option>
+              <option :value="3">Last 3 months</option>
+              <option :value="6">Last 6 months</option>
+              <option :value="12">Last 12 months</option>
+            </select>
+            <ChevronDown :size="15" class="period-chevron" />
+          </label>
 
         </div>
 
@@ -222,12 +229,12 @@
 
           <div class="donut-wrapper">
 
-            <div class="donut">
+            <div class="donut" :style="donutStyle">
 
               <div class="donut-center">
 
                 <strong>
-                  {{ formatCurrency(finance.totalExpenses) }}
+                  {{ formatCurrency(periodExpense) }}
                 </strong>
 
                 <span>
@@ -383,6 +390,7 @@
           <button
             type="button"
             class="view-button"
+            @click="router.push({ name: 'transactions' })"
           >
             View all
             <ArrowRight :size="15" />
@@ -469,107 +477,46 @@
       </div>
 
 
-      <!-- Savings Goal -->
+      <!-- Savings Summary -->
 
       <div class="goal-card glass-surface">
 
         <div class="card-header">
-
           <div>
-
-            <p class="card-eyebrow">
-              YOUR GOAL
-            </p>
-
-            <h3>
-              Savings Goal
-            </h3>
-
+            <p class="card-eyebrow">SAVINGS</p>
+            <h3>Current Savings</h3>
           </div>
-
-          <Target
-            :size="21"
-            class="header-icon"
-          />
-
+          <PiggyBank :size="21" class="header-icon" />
         </div>
-
 
         <div class="goal-visual">
-
           <div
             class="goal-ring"
-            :style="{
-              '--progress':
-                `${finance.savingsPercentage}%`
-            }"
+            :style="{ '--progress': `${finance.savingsPercentage}%` }"
           >
-
             <div>
-
-              <strong>
-                {{ finance.savingsPercentage }}%
-              </strong>
-
-              <span>
-                complete
-              </span>
-
+              <strong>{{ finance.savingsPercentage }}%</strong>
+              <span>of income</span>
             </div>
-
           </div>
-
 
           <div class="goal-details">
-
-            <strong>
-              {{ finance.savingsGoal.title }}
-            </strong>
-
-            <p>
-              {{ formatCurrency(
-                finance.savingsGoal.current
-              ) }}
-
-              saved of
-
-              {{ formatCurrency(
-                finance.savingsGoal.target
-              ) }}
-            </p>
-
-            <span>
-
-              {{ formatCurrency(
-                finance.savingsGoal.target -
-                finance.savingsGoal.current
-              ) }}
-
-              remaining
-
-            </span>
-
+            <strong>{{ formatCurrency(finance.savings) }}</strong>
+            <p>Current net savings</p>
+            <span>Income minus expenses</span>
           </div>
-
         </div>
-
 
         <button
           type="button"
           class="goal-button"
           @click="showTransactionModal = true"
         >
-
-          <span>
-            Add to savings
-          </span>
-
+          <span>Add Transaction</span>
           <ArrowRight :size="16" />
-
         </button>
 
       </div>
-
     </section>
 
 
@@ -589,6 +536,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import {
   ArrowDownRight,
@@ -617,6 +565,7 @@ import AddTransactionModal
 
 const finance = useFinanceStore()
 const auth = useAuthStore()
+const router = useRouter()
 
 const currency = ref('INR')
 
@@ -628,6 +577,8 @@ const displayName = computed(() =>
 )
 
 const showTransactionModal = ref(false)
+const reportMonths = ref(1)
+const reportData = ref({ category: [], monthly: [], totals: { income: 0, expense: 0 } })
 
 onMounted(async () => {
   if (!auth.isAuthenticated) return
@@ -635,7 +586,9 @@ onMounted(async () => {
   try {
     await Promise.all([
       finance.fetchTransactions(),
-      loadAccountPreferences()
+      finance.fetchBudgets(),
+      loadAccountPreferences(),
+      loadDashboardReport()
     ])
   } catch (error) {
     console.error('Failed to load dashboard data:', error)
@@ -647,52 +600,70 @@ async function loadAccountPreferences() {
   currency.value = response.data.data?.preferences?.currency || 'INR'
 }
 
-const chartBars = [
-  35,
-  48,
-  42,
-  65,
-  55,
-  72,
-  61,
-  82,
-  68,
-  75,
-  58,
-  88,
-  72,
-  94
-]
+async function loadDashboardReport() {
+  const response = await api.get('/reports', { params: { months: reportMonths.value } })
+  reportData.value = response.data.data || { category: [], monthly: [], totals: { income: 0, expense: 0 } }
+}
+
+const periodIncome = computed(() => Number(reportData.value.totals?.income) || 0)
+const periodExpense = computed(() => Number(reportData.value.totals?.expense) || 0)
+const periodSavings = computed(() => periodIncome.value - periodExpense.value)
+const periodSavingsPercentage = computed(() =>
+  periodIncome.value > 0
+    ? Math.max(0, Math.round((periodSavings.value / periodIncome.value) * 100))
+    : 0
+)
+
+const chartBars = computed(() => {
+  const monthly = reportData.value.monthly || []
+  if (!monthly.length) return []
+  const maxExpense = Math.max(...monthly.map(item => Number(item.expense) || 0), 1)
+  return monthly.map(item => Math.max(4, Math.round((Number(item.expense) || 0) / maxExpense * 100)))
+})
+
+const spendingCategories = computed(() =>
+  (reportData.value.category || []).slice(0, 5).map((item, index) => ({
+    ...item,
+    color: ['#6366f1', '#06b6d4', '#8b5cf6', '#f59e0b', '#94a3b8'][index]
+  }))
+)
+
+const previousMonth = computed(() => reportData.value.monthly?.[0] || null)
+const currentMonth = computed(() => reportData.value.monthly?.[reportData.value.monthly.length - 1] || null)
+
+function percentChange(current, previous) {
+  current = Number(current) || 0
+  previous = Number(previous) || 0
+  if (previous === 0) return current === 0 ? 0 : 100
+  return Math.round(((current - previous) / previous) * 100)
+}
+
+const incomeChange = computed(() => percentChange(currentMonth.value?.income, previousMonth.value?.income))
+const expenseChange = computed(() => percentChange(currentMonth.value?.expense, previousMonth.value?.expense))
+const balanceChange = computed(() => percentChange(currentMonth.value?.balance, previousMonth.value?.balance))
+const balanceChangeLabel = computed(() => `${balanceChange.value >= 0 ? '+' : ''}${balanceChange.value}%`)
+
+function formatChange(value) {
+  const n = Number(value) || 0
+  return `${n >= 0 ? '+' : ''}${n}%`
+}
 
 
-const spendingCategories = [
-  {
-    name: 'Food',
-    percent: 35,
-    color: '#6366f1'
-  },
-  {
-    name: 'Transport',
-    percent: 20,
-    color: '#06b6d4'
-  },
-  {
-    name: 'Shopping',
-    percent: 18,
-    color: '#8b5cf6'
-  },
-  {
-    name: 'Bills',
-    percent: 15,
-    color: '#f59e0b'
-  },
-  {
-    name: 'Other',
-    percent: 12,
-    color: '#94a3b8'
+const donutStyle = computed(() => {
+  const categories = spendingCategories.value
+  if (!categories.length) {
+    return { background: 'conic-gradient(var(--input-bg) 0 100%)' }
   }
-]
-
+  let start = 0
+  const segments = categories.map(item => {
+    const end = start + Number(item.percent || 0)
+    const segment = `${item.color} ${start}% ${end}%`
+    start = end
+    return segment
+  })
+  if (start < 100) segments.push(`var(--input-bg) ${start}% 100%`)
+  return { background: `conic-gradient(${segments.join(', ')})` }
+})
 
 function formatCurrency(value) {
   return new Intl.NumberFormat(
@@ -1174,28 +1145,59 @@ async function handleAddTransaction(transaction) {
   font-weight: 800;
 }
 
-.period-button,
 .view-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   gap: 5px;
-
   flex-shrink: 0;
-
   border: 1px solid var(--glass-border);
   border-radius: 9px;
-
   background: var(--glass-bg);
   color: var(--app-text-muted);
-
   padding: 7px 10px;
-
   font-size: 0.7rem;
   font-weight: 700;
-
   cursor: pointer;
+}
+
+.period-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.period-select {
+  appearance: none;
+  min-height: 40px;
+  min-width: 126px;
+  padding: 0 34px 0 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 9px;
+  background: var(--glass-bg);
+  color: var(--app-text-muted);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+}
+
+.period-select:focus {
+  border-color: var(--accent);
+}
+
+.period-select option {
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.period-chevron {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: var(--app-text-muted);
 }
 
 .header-icon {

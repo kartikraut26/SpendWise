@@ -2,18 +2,25 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import api from '../services/api'
 
+function categoryName(value) {
+  if (!value) return 'Uncategorized'
+  if (typeof value === 'object') return value.name || value.title || value.category || value._id || 'Uncategorized'
+  return String(value)
+}
+
 function mapTransaction(t) {
+  const category = categoryName(t.categoryId ?? t.category)
   return {
     id: t._id,
     title: t.description,
     description: t.description,
-    category: t.categoryId || 'Uncategorized',
-    categoryId: t.categoryId || null,
+    category,
+    categoryId: category === 'Uncategorized' ? null : category,
     amount: Number(t.amount),
     type: t.type,
     date: t.date,
     dateLabel: formatDate(t.date),
-    icon: getTransactionIcon(t.categoryId, t.type)
+    icon: getTransactionIcon(category, t.type)
   }
 }
 
@@ -72,7 +79,9 @@ export const useFinanceStore = defineStore('finance', () => {
       type: transaction.type,
       amount: Number(transaction.amount),
       description: transaction.description || transaction.title,
-      categoryId: transaction.categoryId || transaction.category || null,
+      categoryId: categoryName(transaction.categoryId || transaction.category) === 'Uncategorized'
+        ? null
+        : categoryName(transaction.categoryId || transaction.category),
       date: transaction.date
     })
     const created = mapTransaction(response.data.data)
@@ -85,7 +94,9 @@ export const useFinanceStore = defineStore('finance', () => {
       type: transaction.type,
       amount: Number(transaction.amount),
       description: transaction.description || transaction.title,
-      categoryId: transaction.categoryId || transaction.category || null,
+      categoryId: categoryName(transaction.categoryId || transaction.category) === 'Uncategorized'
+        ? null
+        : categoryName(transaction.categoryId || transaction.category),
       date: transaction.date
     })
     const updated = mapTransaction(response.data.data)

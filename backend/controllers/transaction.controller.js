@@ -1,5 +1,11 @@
 const Transaction = require('../models/Transaction')
 
+function normalizeCategoryId(value) {
+  if (!value) return null
+  if (typeof value === 'object') return String(value.name || value.title || value.category || value._id || '').trim() || null
+  return String(value).trim() || null
+}
+
 function buildFilters(req) {
   const filters = { userId: req.user.id }
 
@@ -63,7 +69,7 @@ async function createTransaction(req, res) {
     type,
     amount: numericAmount,
     description: String(description).trim(),
-    categoryId: categoryId ? String(categoryId).trim() : null,
+    categoryId: normalizeCategoryId(categoryId),
     date: new Date(date)
   })
 
@@ -88,7 +94,7 @@ async function updateTransaction(req, res) {
     }
   }
   if (updates.description !== undefined) updates.description = String(updates.description).trim()
-  if (updates.categoryId !== undefined) updates.categoryId = updates.categoryId ? String(updates.categoryId).trim() : null
+  if (updates.categoryId !== undefined) updates.categoryId = normalizeCategoryId(updates.categoryId)
   if (updates.date !== undefined) updates.date = new Date(updates.date)
 
   const transaction = await Transaction.findOneAndUpdate(

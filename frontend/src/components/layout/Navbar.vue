@@ -23,22 +23,6 @@
     <!-- Right -->
     <div class="navbar-actions">
 
-      <!-- Search -->
-      <div class="search-box">
-
-        <Search :size="16" />
-
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Search..."
-        />
-
-        <kbd>⌘ K</kbd>
-
-      </div>
-
-
       <!-- Notifications -->
       <div class="notification-wrapper">
 
@@ -50,7 +34,7 @@
         >
           <Bell :size="18" />
 
-          <span class="notification-dot"></span>
+          <span v-if="notifications.length" class="notification-dot"></span>
         </button>
 
 
@@ -60,76 +44,25 @@
             v-if="showNotifications"
             class="notification-menu"
           >
-
             <div class="notification-header">
-
-              <strong>
-                Notifications
-              </strong>
-
-              <span>
-                3 new
-              </span>
-
+              <strong>Notifications</strong>
+              <span>{{ notifications.length }} active</span>
             </div>
 
+            <div v-if="!notifications.length" class="notification-empty">
+              No budget alerts or upcoming payments.
+            </div>
 
-            <div class="notification-item">
-
-              <div class="notification-icon warning">
-                <WalletCards :size="16" />
+            <div v-for="item in notifications" :key="item.id" class="notification-item">
+              <div class="notification-icon" :class="item.kind">
+                <WalletCards v-if="item.kind === 'warning'" :size="16" />
+                <CreditCard v-else :size="16" />
               </div>
-
               <div>
-                <strong>
-                  Food budget is at 72%
-                </strong>
-
-                <span>
-                  Review your spending
-                </span>
+                <strong>{{ item.title }}</strong>
+                <span>{{ item.detail }}</span>
               </div>
-
             </div>
-
-
-            <div class="notification-item">
-
-              <div class="notification-icon purple">
-                <CreditCard :size="16" />
-              </div>
-
-              <div>
-                <strong>
-                  Netflix payment tomorrow
-                </strong>
-
-                <span>
-                  ₹649 scheduled
-                </span>
-              </div>
-
-            </div>
-
-
-            <div class="notification-item">
-
-              <div class="notification-icon success">
-                <Target :size="16" />
-              </div>
-
-              <div>
-                <strong>
-                  Savings goal reached 75%
-                </strong>
-
-                <span>
-                  Keep going!
-                </span>
-              </div>
-
-            </div>
-
           </div>
 
         </Transition>
@@ -301,6 +234,7 @@
 <script setup>
 import {
   computed,
+  onMounted,
   ref
 } from 'vue'
 
@@ -316,10 +250,8 @@ import {
   LogOut,
   Menu,
   Moon,
-  Search,
   Settings,
   Sun,
-  Target,
   UserCircle,
   WalletCards
 } from 'lucide-vue-next'
@@ -331,6 +263,8 @@ import {
 import {
   useAuthStore
 } from '../../stores/auth'
+
+import { useFinanceStore } from '../../stores/finance'
 
 
 defineEmits([
@@ -348,9 +282,6 @@ const auth =
   useAuthStore()
 
 
-const search =
-  ref('')
-
 const showNotifications =
   ref(false)
 
@@ -359,6 +290,52 @@ const showProfileMenu =
 
 const isLoggingOut =
   ref(false)
+
+const finance =
+  useFinanceStore()
+
+const notifications =
+  computed(() => {
+    const items = []
+
+    finance.budgets
+      .filter(b => b.limit > 0 && b.spent / b.limit >= 0.8)
+      .forEach(b => items.push({
+        id: `budget-${b._id}`,
+        kind: 'warning',
+        title: `${b.category} budget is at ${Math.round(b.spent / b.limit * 100)}%`,
+        detail: `${money(b.spent)} spent of ${money(b.limit)}`
+      }))
+
+    const today = new Date()
+    const horizon = new Date(today)
+    horizon.setDate(today.getDate() + 7)
+
+    finance.subscriptions
+      .filter(s => s.active && new Date(s.nextPaymentDate) <= horizon)
+      .slice(0, 5)
+      .forEach(s => items.push({
+        id: `subscription-${s._id}`,
+        kind: 'purple',
+        title: `${s.name} payment upcoming`,
+        detail: `${money(s.amount)} on ${new Date(s.nextPaymentDate).toLocaleDateString('en-IN', { day:'numeric', month:'short' })}`
+      }))
+
+    return items.slice(0, 6)
+  })
+
+function money(value) {
+  return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:0 }).format(value || 0)
+}
+
+onMounted(async () => {
+  if (!auth.isAuthenticated) return
+  try {
+    await Promise.all([finance.fetchBudgets(), finance.fetchSubscriptions()])
+  } catch (error) {
+    console.error('Could not load notifications:', error)
+  }
+})
 
 
 const pageTitles = {
@@ -629,62 +606,6 @@ async function handleLogout() {
   gap: 8px;
 
   flex-shrink: 0;
-}
-
-
-/* =========================================
-   SEARCH
-========================================= */
-
-.search-box {
-  display: flex;
-  align-items: center;
-
-  gap: 8px;
-
-  width: 210px;
-  height: 38px;
-
-  padding: 0 10px;
-
-  border: 1px solid var(--glass-border);
-  border-radius: 10px;
-
-  background: var(--glass-bg);
-
-  color: var(--app-text-muted);
-}
-
-.search-box input {
-  width: 100%;
-  min-width: 0;
-
-  border: 0;
-  outline: 0;
-
-  background: transparent;
-  color: var(--app-text);
-
-  font-size: 0.75rem;
-}
-
-.search-box input::placeholder {
-  color: var(--app-text-muted);
-}
-
-.search-box kbd {
-  flex-shrink: 0;
-
-  padding: 3px 5px;
-
-  border: 1px solid var(--glass-border);
-  border-radius: 5px;
-
-  background: transparent;
-
-  color: var(--app-text-muted);
-
-  font-size: 0.55rem;
 }
 
 
@@ -1116,10 +1037,6 @@ async function handleLogout() {
     padding: 0 22px;
   }
 
-  .search-box {
-    width: 180px;
-  }
-
 }
 
 
@@ -1143,10 +1060,6 @@ async function handleLogout() {
 
   .page-title {
     font-size: 0.8rem;
-  }
-
-  .search-box {
-    display: none;
   }
 
   .profile-info,
