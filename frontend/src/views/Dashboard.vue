@@ -14,7 +14,7 @@
         </p>
 
         <h1>
-          Good evening, {{ displayName }} <span>👋</span>
+          {{ greeting }}, {{ displayName }} <span>👋</span>
         </h1>
 
         <p class="welcome-subtitle">
@@ -111,7 +111,7 @@
         </p>
 
         <h2>
-          {{ formatCurrency(periodIncome) }}
+          {{ formatCurrency(finance.totalIncome) }}
         </h2>
 
         <p class="stat-note">
@@ -142,7 +142,7 @@
         </p>
 
         <h2>
-          {{ formatCurrency(periodExpense) }}
+          {{ formatCurrency(finance.totalExpenses) }}
         </h2>
 
         <p class="stat-note">
@@ -163,7 +163,7 @@
           </div>
 
           <span class="stat-badge neutral">
-            {{ periodSavingsPercentage }}%
+            {{ finance.savingsPercentage }}%
           </span>
 
         </div>
@@ -173,11 +173,11 @@
         </p>
 
         <h2>
-          {{ formatCurrency(periodSavings) }}
+          {{ formatCurrency(finance.savings) }}
         </h2>
 
         <p class="stat-note">
-          {{ periodSavingsPercentage }}% of total income
+          {{ finance.savingsPercentage }}% of total income
         </p>
 
       </div>
@@ -207,20 +207,13 @@
             </h3>
           </div>
 
-          <label class="period-select-wrap">
-            <select
-              v-model.number="reportMonths"
-              class="period-select"
-              aria-label="Report period"
-              @change="loadDashboardReport"
-            >
-              <option :value="1">This month</option>
-              <option :value="3">Last 3 months</option>
-              <option :value="6">Last 6 months</option>
-              <option :value="12">Last 12 months</option>
-            </select>
-            <ChevronDown :size="15" class="period-chevron" />
-          </label>
+          <button
+            type="button"
+            class="period-button"
+          >
+            This month
+            <ChevronDown :size="15" />
+          </button>
 
         </div>
 
@@ -234,7 +227,7 @@
               <div class="donut-center">
 
                 <strong>
-                  {{ formatCurrency(periodExpense) }}
+                  {{ formatCurrency(finance.totalExpenses) }}
                 </strong>
 
                 <span>
@@ -390,7 +383,6 @@
           <button
             type="button"
             class="view-button"
-            @click="router.push({ name: 'transactions' })"
           >
             View all
             <ArrowRight :size="15" />
@@ -535,8 +527,7 @@
 
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import {
   ArrowDownRight,
@@ -565,7 +556,6 @@ import AddTransactionModal
 
 const finance = useFinanceStore()
 const auth = useAuthStore()
-const router = useRouter()
 
 const currency = ref('INR')
 
@@ -576,11 +566,35 @@ const displayName = computed(() =>
   'there'
 )
 
+// Time-based dashboard greeting.
+// It uses the user's local browser time and updates automatically
+// while the Dashboard remains open.
+const greeting = ref('Good evening')
+let greetingTimer = null
+
+function updateGreeting() {
+  const hour = new Date().getHours()
+
+  if (hour >= 5 && hour < 12) {
+    greeting.value = 'Good morning'
+  } else if (hour >= 12 && hour < 17) {
+    greeting.value = 'Good afternoon'
+  } else {
+    greeting.value = 'Good evening'
+  }
+}
+
 const showTransactionModal = ref(false)
-const reportMonths = ref(1)
 const reportData = ref({ category: [], monthly: [], totals: { income: 0, expense: 0 } })
 
 onMounted(async () => {
+  // Set the greeting immediately when the Dashboard opens.
+  updateGreeting()
+
+  // Re-check every minute so the greeting changes automatically
+  // when the time moves from morning → afternoon → evening.
+  greetingTimer = setInterval(updateGreeting, 60 * 1000)
+
   if (!auth.isAuthenticated) return
 
   try {
@@ -595,24 +609,22 @@ onMounted(async () => {
   }
 })
 
+onUnmounted(() => {
+  if (greetingTimer) {
+    clearInterval(greetingTimer)
+    greetingTimer = null
+  }
+})
+
 async function loadAccountPreferences() {
   const response = await api.get('/profile/me')
   currency.value = response.data.data?.preferences?.currency || 'INR'
 }
 
 async function loadDashboardReport() {
-  const response = await api.get('/reports', { params: { months: reportMonths.value } })
+  const response = await api.get('/reports', { params: { months: 2 } })
   reportData.value = response.data.data || { category: [], monthly: [], totals: { income: 0, expense: 0 } }
 }
-
-const periodIncome = computed(() => Number(reportData.value.totals?.income) || 0)
-const periodExpense = computed(() => Number(reportData.value.totals?.expense) || 0)
-const periodSavings = computed(() => periodIncome.value - periodExpense.value)
-const periodSavingsPercentage = computed(() =>
-  periodIncome.value > 0
-    ? Math.max(0, Math.round((periodSavings.value / periodIncome.value) * 100))
-    : 0
-)
 
 const chartBars = computed(() => {
   const monthly = reportData.value.monthly || []
@@ -1145,59 +1157,28 @@ async function handleAddTransaction(transaction) {
   font-weight: 800;
 }
 
+.period-button,
 .view-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   gap: 5px;
+
   flex-shrink: 0;
+
   border: 1px solid var(--glass-border);
   border-radius: 9px;
+
   background: var(--glass-bg);
   color: var(--app-text-muted);
+
   padding: 7px 10px;
+
   font-size: 0.7rem;
   font-weight: 700;
+
   cursor: pointer;
-}
-
-.period-select-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.period-select {
-  appearance: none;
-  min-height: 40px;
-  min-width: 126px;
-  padding: 0 34px 0 12px;
-  border: 1px solid var(--glass-border);
-  border-radius: 9px;
-  background: var(--glass-bg);
-  color: var(--app-text-muted);
-  font: inherit;
-  font-size: 0.7rem;
-  font-weight: 700;
-  cursor: pointer;
-  outline: none;
-}
-
-.period-select:focus {
-  border-color: var(--accent);
-}
-
-.period-select option {
-  background: var(--app-bg);
-  color: var(--app-text);
-}
-
-.period-chevron {
-  position: absolute;
-  right: 10px;
-  pointer-events: none;
-  color: var(--app-text-muted);
 }
 
 .header-icon {
