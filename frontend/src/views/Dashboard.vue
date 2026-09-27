@@ -186,6 +186,49 @@
 
 
     <!-- =========================================
+         INVESTMENTS
+    ========================================== -->
+
+    <section class="investments-card glass-surface">
+
+      <div class="card-header">
+        <div>
+          <p class="card-eyebrow">PORTFOLIO</p>
+          <h3>Investments</h3>
+        </div>
+
+        <button type="button" class="view-button" @click="$router.push('/investments')">
+          View all
+          <ArrowRight :size="15" />
+        </button>
+      </div>
+
+      <div v-if="!finance.investments.length" class="investment-empty">
+        <TrendingUp :size="18" />
+        <span>No investments added yet.</span>
+        <button type="button" class="mini-action" @click="$router.push('/investments')">Add investment</button>
+      </div>
+
+      <div v-else class="dashboard-investment-list">
+        <div v-for="investment in finance.investments.slice(0, 3)" :key="investment._id" class="dashboard-investment-row">
+          <div class="dashboard-investment-info">
+            <strong>{{ investment.companyName }}</strong>
+            <span>{{ investment.symbol }} · {{ investment.exchange }} · {{ investment.quantity }} qty</span>
+          </div>
+          <div class="dashboard-investment-value">
+            <strong>{{ formatCurrency(investment.currentValue) }}</strong>
+            <span :class="investment.profitLoss >= 0 ? 'positive-text' : 'negative-text'">
+              {{ investment.profitLoss >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(investment.profitLoss)) }}
+              ({{ investment.profitLossPercentage >= 0 ? '+' : '' }}{{ Number(investment.profitLossPercentage || 0).toFixed(2) }}%)
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- =========================================
          ANALYTICS
     ========================================== -->
 
@@ -207,13 +250,16 @@
             </h3>
           </div>
 
-          <button
-            type="button"
+          <select
+            v-model.number="dashboardPeriod"
             class="period-button"
+            aria-label="Spending overview period"
+            @change="loadDashboardReport"
           >
-            This month
-            <ChevronDown :size="15" />
-          </button>
+            <option :value="1">This month</option>
+            <option :value="2">Last 2 months</option>
+            <option :value="3">Last 3 months</option>
+          </select>
 
         </div>
 
@@ -383,6 +429,7 @@
           <button
             type="button"
             class="view-button"
+            @click="router.push('/transactions')"
           >
             View all
             <ArrowRight :size="15" />
@@ -528,6 +575,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import {
   ArrowDownRight,
@@ -556,6 +604,7 @@ import AddTransactionModal
 
 const finance = useFinanceStore()
 const auth = useAuthStore()
+const router = useRouter()
 
 const currency = ref('INR')
 
@@ -585,6 +634,7 @@ function updateGreeting() {
 }
 
 const showTransactionModal = ref(false)
+const dashboardPeriod = ref(1)
 const reportData = ref({ category: [], monthly: [], totals: { income: 0, expense: 0 } })
 
 onMounted(async () => {
@@ -601,6 +651,7 @@ onMounted(async () => {
     await Promise.all([
       finance.fetchTransactions(),
       finance.fetchBudgets(),
+      finance.fetchInvestments(),
       loadAccountPreferences(),
       loadDashboardReport()
     ])
@@ -622,7 +673,7 @@ async function loadAccountPreferences() {
 }
 
 async function loadDashboardReport() {
-  const response = await api.get('/reports', { params: { months: 2 } })
+  const response = await api.get('/reports', { params: { months: dashboardPeriod.value } })
   reportData.value = response.data.data || { category: [], monthly: [], totals: { income: 0, expense: 0 } }
 }
 
@@ -1946,4 +1997,6 @@ async function handleAddTransaction(transaction) {
   }
 
 }
+
+.investments-card{padding:22px;margin-bottom:18px}.dashboard-investment-list{display:flex;flex-direction:column}.dashboard-investment-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 0;border-top:1px solid var(--glass-border)}.dashboard-investment-info{display:flex;flex-direction:column;min-width:0}.dashboard-investment-info strong{font-size:.9rem}.dashboard-investment-info span,.dashboard-investment-value span{font-size:.72rem;color:var(--app-text-muted);margin-top:3px}.dashboard-investment-value{text-align:right;display:flex;flex-direction:column;flex-shrink:0}.dashboard-investment-value strong{font-size:.88rem}.positive-text{color:var(--success)!important}.negative-text{color:var(--danger)!important}.investment-empty{display:flex;align-items:center;gap:9px;padding:14px 0;color:var(--app-text-muted);font-size:.82rem}.mini-action{margin-left:auto;border:1px solid var(--glass-border);background:var(--input-bg);color:var(--app-text);border-radius:9px;padding:8px 11px;cursor:pointer}@media(max-width:600px){.dashboard-investment-row{align-items:flex-start}.dashboard-investment-value{font-size:.8rem}.dashboard-investment-info span{white-space:normal}.investment-empty{flex-wrap:wrap}.mini-action{margin-left:0}}
 </style>

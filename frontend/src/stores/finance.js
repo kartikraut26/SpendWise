@@ -49,6 +49,8 @@ export const useFinanceStore = defineStore('finance', () => {
   const categories = ref([])
   const budgets = ref([])
   const subscriptions = ref([])
+  const investments = ref([])
+  const investmentSummary = ref({ totalInvested: 0, currentValue: 0, totalProfitLoss: 0, profitLossPercentage: 0 })
   const loading = ref(false)
 
   const totalIncome = computed(() =>
@@ -135,10 +137,51 @@ export const useFinanceStore = defineStore('finance', () => {
     return subscriptions.value
   }
 
+  async function fetchInvestments() {
+    const response = await api.get('/investments')
+    investments.value = response.data.data || []
+    investmentSummary.value = response.data.summary || { totalInvested: 0, currentValue: 0, totalProfitLoss: 0, profitLossPercentage: 0 }
+    return investments.value
+  }
+
+  async function addInvestment(investment) {
+    const response = await api.post('/investments', {
+      companyName: investment.companyName,
+      symbol: investment.symbol,
+      exchange: investment.exchange,
+      quantity: Number(investment.quantity),
+      buyPrice: Number(investment.buyPrice),
+      purchaseDate: investment.purchaseDate,
+      currentPrice: Number(investment.currentPrice)
+    })
+    await fetchInvestments()
+    return response.data.data
+  }
+
+  async function updateInvestment(id, investment) {
+    const response = await api.patch(`/investments/${id}`, {
+      companyName: investment.companyName,
+      symbol: investment.symbol,
+      exchange: investment.exchange,
+      quantity: Number(investment.quantity),
+      buyPrice: Number(investment.buyPrice),
+      purchaseDate: investment.purchaseDate,
+      currentPrice: Number(investment.currentPrice)
+    })
+    await fetchInvestments()
+    return response.data.data
+  }
+
+  async function deleteInvestment(id) {
+    await api.delete(`/investments/${id}`)
+    await fetchInvestments()
+  }
+
   return {
-    transactions, categories, budgets, subscriptions, loading,
+    transactions, categories, budgets, subscriptions, investments, investmentSummary, loading,
     totalIncome, totalExpenses, totalBalance, savings, savingsPercentage,
     fetchTransactions, addTransaction, updateTransaction, deleteTransaction,
-    fetchCategories, fetchBudgets, fetchSubscriptions
+    fetchCategories, fetchBudgets, fetchSubscriptions,
+    fetchInvestments, addInvestment, updateInvestment, deleteInvestment
   }
 })

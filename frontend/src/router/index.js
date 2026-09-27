@@ -82,6 +82,13 @@ const routes = [
       },
 
       {
+        path: 'investments',
+        name: 'investments',
+        component: () =>
+          import('../views/Investments.vue')
+      },
+
+      {
         path: 'reports',
         name: 'reports',
         component: () =>

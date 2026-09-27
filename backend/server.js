@@ -28,6 +28,7 @@ const requireAuth = require("./middleware/auth");
 
 const budgetRoutes = require("./routes/budget.routes");
 const subscriptionRoutes = require("./routes/subscription.routes");
+const investmentRoutes = require("./routes/investment.routes");
 
 const categoryRoutes = require('./routes/category.routes')
 
@@ -112,6 +113,8 @@ app.use("/api/budgets", requireAuth, budgetRoutes);
 app.use("/api/subscriptions", requireAuth, subscriptionRoutes);
 
 app.use("/api/categories", requireAuth, categoryRoutes);
+
+app.use("/api/investments", requireAuth, investmentRoutes);
 
 /* =========================================
    ERROR HANDLING

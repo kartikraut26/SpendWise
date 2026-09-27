@@ -76,6 +76,15 @@
           <span>Subscriptions</span>
         </RouterLink>
 
+        <RouterLink
+          to="/investments"
+          class="nav-item"
+          @click="close"
+        >
+          <TrendingUp :size="18" />
+          <span>Investments</span>
+        </RouterLink>
+
 
         <p class="section-title">
           INSIGHTS
@@ -148,6 +157,7 @@ import {
   ArrowLeftRight,
   BarChart3,
   LayoutDashboard,
+  TrendingUp,
   RefreshCw,
   Settings,
   Tags,
