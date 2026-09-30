@@ -1,5 +1,13 @@
 const mongoose = require('mongoose')
 
+const priceHistorySchema = new mongoose.Schema(
+  {
+    date: { type: Date, required: true },
+    price: { type: Number, required: true, min: 0 }
+  },
+  { _id: false }
+)
+
 const investmentSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true, index: true },
@@ -16,7 +24,13 @@ const investmentSchema = new mongoose.Schema(
 
     purchaseDate: { type: Date, required: true },
 
-    currentPrice: { type: Number, required: true, min: 0 }
+    currentPrice: { type: Number, required: true, min: 0 },
+
+    // Five user-supplied historical price points used for the stock chart.
+    priceHistory: {
+      type: [priceHistorySchema],
+      default: []
+    }
   },
   { timestamps: true }
 )

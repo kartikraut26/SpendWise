@@ -46,7 +46,7 @@
 
         <div class="balance-label">
           <Wallet :size="17" />
-          <span>Total Balance</span>
+          <span>Overall Balance</span>
         </div>
 
         <div class="balance-value">
@@ -107,11 +107,11 @@
         </div>
 
         <p class="stat-label">
-          Total Income
+          Monthly Income
         </p>
 
         <h2>
-          {{ formatCurrency(finance.totalIncome) }}
+          {{ formatCurrency(monthlyIncome) }}
         </h2>
 
         <p class="stat-note">
@@ -138,11 +138,11 @@
         </div>
 
         <p class="stat-label">
-          Total Expenses
+          Monthly Expenses
         </p>
 
         <h2>
-          {{ formatCurrency(finance.totalExpenses) }}
+          {{ formatCurrency(monthlyExpenses) }}
         </h2>
 
         <p class="stat-note">
@@ -163,21 +163,21 @@
           </div>
 
           <span class="stat-badge neutral">
-            {{ finance.savingsPercentage }}%
+            {{ monthlySavingsPercentage }}%
           </span>
 
         </div>
 
         <p class="stat-label">
-          Savings Goal
+          Monthly Savings
         </p>
 
         <h2>
-          {{ formatCurrency(finance.savings) }}
+          {{ formatCurrency(monthlySavings) }}
         </h2>
 
         <p class="stat-note">
-          {{ finance.savingsPercentage }}% of total income
+          {{ monthlySavingsPercentage }}% of monthly income
         </p>
 
       </div>
@@ -273,7 +273,7 @@
               <div class="donut-center">
 
                 <strong>
-                  {{ formatCurrency(finance.totalExpenses) }}
+                  {{ formatCurrency(reportData.totals?.expense || 0) }}
                 </strong>
 
                 <span>
@@ -531,17 +531,17 @@
         <div class="goal-visual">
           <div
             class="goal-ring"
-            :style="{ '--progress': `${finance.savingsPercentage}%` }"
+            :style="{ '--progress': `${monthlySavingsPercentage}%` }"
           >
             <div>
-              <strong>{{ finance.savingsPercentage }}%</strong>
+              <strong>{{ monthlySavingsPercentage }}%</strong>
               <span>of income</span>
             </div>
           </div>
 
           <div class="goal-details">
-            <strong>{{ formatCurrency(finance.savings) }}</strong>
-            <p>Current net savings</p>
+            <strong>{{ formatCurrency(monthlySavings) }}</strong>
+            <p>Current month net savings</p>
             <span>Income minus expenses</span>
           </div>
         </div>
@@ -693,6 +693,17 @@ const spendingCategories = computed(() =>
 
 const previousMonth = computed(() => reportData.value.monthly?.[0] || null)
 const currentMonth = computed(() => reportData.value.monthly?.[reportData.value.monthly.length - 1] || null)
+
+// Dashboard stat cards are monthly figures. The finance store totals are
+// intentionally kept as overall totals for other parts of the application.
+const monthlyIncome = computed(() => Number(currentMonth.value?.income) || 0)
+const monthlyExpenses = computed(() => Number(currentMonth.value?.expense) || 0)
+const monthlySavings = computed(() => Math.max(monthlyIncome.value - monthlyExpenses.value, 0))
+const monthlySavingsPercentage = computed(() =>
+  monthlyIncome.value > 0
+    ? Math.max(0, Math.round((monthlySavings.value / monthlyIncome.value) * 100))
+    : 0
+)
 
 function percentChange(current, previous) {
   current = Number(current) || 0

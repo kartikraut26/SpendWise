@@ -4,184 +4,546 @@ import api from '../services/api'
 
 function categoryName(value) {
   if (!value) return 'Uncategorized'
-  if (typeof value === 'object') return value.name || value.title || value.category || value._id || 'Uncategorized'
+
+  if (typeof value === 'object') {
+    return (
+      value.name ||
+      value.title ||
+      value.category ||
+      value._id ||
+      'Uncategorized'
+    )
+  }
+
   return String(value)
 }
 
 function mapTransaction(t) {
-  const category = categoryName(t.categoryId ?? t.category)
+  const category =
+    categoryName(t.categoryId ?? t.category)
+
   return {
     id: t._id,
     title: t.description,
     description: t.description,
     category,
-    categoryId: category === 'Uncategorized' ? null : category,
+    categoryId:
+      category === 'Uncategorized'
+        ? null
+        : category,
     amount: Number(t.amount),
     type: t.type,
     date: t.date,
     dateLabel: formatDate(t.date),
-    icon: getTransactionIcon(category, t.type)
+    icon: getTransactionIcon(
+      category,
+      t.type
+    )
   }
 }
 
 function formatDate(date) {
   if (!date) return ''
+
   const d = new Date(date)
   const today = new Date()
-  if (d.toDateString() === today.toDateString()) return 'Today'
+
+  if (
+    d.toDateString() ===
+    today.toDateString()
+  ) {
+    return 'Today'
+  }
+
   const yesterday = new Date(today)
-  yesterday.setDate(today.getDate() - 1)
-  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+
+  yesterday.setDate(
+    today.getDate() - 1
+  )
+
+  if (
+    d.toDateString() ===
+    yesterday.toDateString()
+  ) {
+    return 'Yesterday'
+  }
+
+  return d.toLocaleDateString(
+    'en-IN',
+    {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    }
+  )
 }
 
 function getTransactionIcon(category, type) {
-  if (type === 'income') return 'wallet'
-  const value = String(category || '').toLowerCase()
-  if (value.includes('food') || value.includes('grocery')) return 'food'
-  if (value.includes('transport') || value.includes('petrol') || value.includes('travel')) return 'transport'
-  if (value.includes('subscription') || value.includes('entertainment')) return 'subscription'
+  if (type === 'income') {
+    return 'wallet'
+  }
+
+  const value =
+    String(category || '').toLowerCase()
+
+  if (
+    value.includes('food') ||
+    value.includes('grocery')
+  ) {
+    return 'food'
+  }
+
+  if (
+    value.includes('transport') ||
+    value.includes('petrol') ||
+    value.includes('travel')
+  ) {
+    return 'transport'
+  }
+
+  if (
+    value.includes('subscription') ||
+    value.includes('entertainment')
+  ) {
+    return 'subscription'
+  }
+
   return 'receipt'
 }
 
-export const useFinanceStore = defineStore('finance', () => {
-  const transactions = ref([])
-  const categories = ref([])
-  const budgets = ref([])
-  const subscriptions = ref([])
-  const investments = ref([])
-  const investmentSummary = ref({ totalInvested: 0, currentValue: 0, totalProfitLoss: 0, profitLossPercentage: 0 })
-  const loading = ref(false)
+export const useFinanceStore =
+  defineStore('finance', () => {
+    const transactions = ref([])
+    const categories = ref([])
+    const budgets = ref([])
+    const subscriptions = ref([])
 
-  const totalIncome = computed(() =>
-    transactions.value.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount), 0)
-  )
-  const totalExpenses = computed(() =>
-    transactions.value.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0)
-  )
-  const totalBalance = computed(() => totalIncome.value - totalExpenses.value)
-  const savings = computed(() => Math.max(totalBalance.value, 0))
-  const savingsPercentage = computed(() =>
-    totalIncome.value > 0 ? Math.max(0, Math.round((totalBalance.value / totalIncome.value) * 100)) : 0
-  )
+    const investments = ref([])
 
-  async function fetchTransactions(params = {}) {
-    loading.value = true
-    try {
-      const response = await api.get('/transactions', { params })
-      transactions.value = (response.data.data || []).map(mapTransaction)
-      return transactions.value
-    } finally {
-      loading.value = false
+    const investmentSummary = ref({
+      totalInvested: 0,
+      currentValue: 0,
+      totalProfitLoss: 0,
+      profitLossPercentage: 0
+    })
+
+    const loading = ref(false)
+
+    const totalIncome = computed(() =>
+      transactions.value
+        .filter(
+          t => t.type === 'income'
+        )
+        .reduce(
+          (sum, t) =>
+            sum + Number(t.amount),
+          0
+        )
+    )
+
+    const totalExpenses = computed(() =>
+      transactions.value
+        .filter(
+          t => t.type === 'expense'
+        )
+        .reduce(
+          (sum, t) =>
+            sum + Number(t.amount),
+          0
+        )
+    )
+
+    const totalBalance = computed(
+      () =>
+        totalIncome.value -
+        totalExpenses.value
+    )
+
+    const savings = computed(() =>
+      Math.max(
+        totalBalance.value,
+        0
+      )
+    )
+
+    const savingsPercentage =
+      computed(() =>
+        totalIncome.value > 0
+          ? Math.max(
+              0,
+              Math.round(
+                (totalBalance.value /
+                  totalIncome.value) *
+                  100
+              )
+            )
+          : 0
+      )
+
+    async function fetchTransactions(
+      params = {}
+    ) {
+      loading.value = true
+
+      try {
+        const response =
+          await api.get(
+            '/transactions',
+            { params }
+          )
+
+        transactions.value =
+          (
+            response.data.data ||
+            []
+          ).map(mapTransaction)
+
+        return transactions.value
+      } finally {
+        loading.value = false
+      }
     }
-  }
 
-  async function addTransaction(transaction) {
-    const response = await api.post('/transactions', {
-      type: transaction.type,
-      amount: Number(transaction.amount),
-      description: transaction.description || transaction.title,
-      categoryId: categoryName(transaction.categoryId || transaction.category) === 'Uncategorized'
-        ? null
-        : categoryName(transaction.categoryId || transaction.category),
-      date: transaction.date
-    })
-    const created = mapTransaction(response.data.data)
-    transactions.value = [created, ...transactions.value]
-    return created
-  }
+    async function addTransaction(
+      transaction
+    ) {
+      const response =
+        await api.post(
+          '/transactions',
+          {
+            type: transaction.type,
+            amount:
+              Number(transaction.amount),
+            description:
+              transaction.description ||
+              transaction.title,
+            categoryId:
+              categoryName(
+                transaction.categoryId ||
+                  transaction.category
+              ) === 'Uncategorized'
+                ? null
+                : categoryName(
+                    transaction.categoryId ||
+                      transaction.category
+                  ),
+            date: transaction.date
+          }
+        )
 
-  async function updateTransaction(id, transaction) {
-    const response = await api.patch(`/transactions/${id}`, {
-      type: transaction.type,
-      amount: Number(transaction.amount),
-      description: transaction.description || transaction.title,
-      categoryId: categoryName(transaction.categoryId || transaction.category) === 'Uncategorized'
-        ? null
-        : categoryName(transaction.categoryId || transaction.category),
-      date: transaction.date
-    })
-    const updated = mapTransaction(response.data.data)
-    const index = transactions.value.findIndex(t => t.id === id)
-    if (index >= 0) transactions.value[index] = updated
-    return updated
-  }
+      const created =
+        mapTransaction(
+          response.data.data
+        )
 
-  async function deleteTransaction(id) {
-    await api.delete(`/transactions/${id}`)
-    transactions.value = transactions.value.filter(t => t.id !== id)
-  }
+      transactions.value = [
+        created,
+        ...transactions.value
+      ]
 
-  async function fetchCategories() {
-    const response = await api.get('/categories')
-    categories.value = response.data.data || []
-    return categories.value
-  }
+      return created
+    }
 
-  async function fetchBudgets(month) {
-    const response = await api.get('/budgets', { params: month ? { month } : {} })
-    budgets.value = (response.data.data || []).map(b => ({
-      ...b,
-      id: b._id,
-      category: b.categoryId === 'overall' ? 'Overall' : b.categoryId,
-      limit: Number(b.amount),
-      spent: Number(b.spent || 0),
-      remaining: Number(b.remaining ?? Math.max(Number(b.amount) - Number(b.spent || 0), 0))
-    }))
-    return budgets.value
-  }
+    async function updateTransaction(
+      id,
+      transaction
+    ) {
+      const response =
+        await api.patch(
+          `/transactions/${id}`,
+          {
+            type: transaction.type,
+            amount:
+              Number(transaction.amount),
+            description:
+              transaction.description ||
+              transaction.title,
+            categoryId:
+              categoryName(
+                transaction.categoryId ||
+                  transaction.category
+              ) === 'Uncategorized'
+                ? null
+                : categoryName(
+                    transaction.categoryId ||
+                      transaction.category
+                  ),
+            date: transaction.date
+          }
+        )
 
-  async function fetchSubscriptions() {
-    const response = await api.get('/subscriptions')
-    subscriptions.value = response.data.data || []
-    return subscriptions.value
-  }
+      const updated =
+        mapTransaction(
+          response.data.data
+        )
 
-  async function fetchInvestments() {
-    const response = await api.get('/investments')
-    investments.value = response.data.data || []
-    investmentSummary.value = response.data.summary || { totalInvested: 0, currentValue: 0, totalProfitLoss: 0, profitLossPercentage: 0 }
-    return investments.value
-  }
+      const index =
+        transactions.value.findIndex(
+          t => t.id === id
+        )
 
-  async function addInvestment(investment) {
-    const response = await api.post('/investments', {
-      companyName: investment.companyName,
-      symbol: investment.symbol,
-      exchange: investment.exchange,
-      quantity: Number(investment.quantity),
-      buyPrice: Number(investment.buyPrice),
-      purchaseDate: investment.purchaseDate,
-      currentPrice: Number(investment.currentPrice)
-    })
-    await fetchInvestments()
-    return response.data.data
-  }
+      if (index >= 0) {
+        transactions.value[index] =
+          updated
+      }
 
-  async function updateInvestment(id, investment) {
-    const response = await api.patch(`/investments/${id}`, {
-      companyName: investment.companyName,
-      symbol: investment.symbol,
-      exchange: investment.exchange,
-      quantity: Number(investment.quantity),
-      buyPrice: Number(investment.buyPrice),
-      purchaseDate: investment.purchaseDate,
-      currentPrice: Number(investment.currentPrice)
-    })
-    await fetchInvestments()
-    return response.data.data
-  }
+      return updated
+    }
 
-  async function deleteInvestment(id) {
-    await api.delete(`/investments/${id}`)
-    await fetchInvestments()
-  }
+    async function deleteTransaction(id) {
+      await api.delete(
+        `/transactions/${id}`
+      )
 
-  return {
-    transactions, categories, budgets, subscriptions, investments, investmentSummary, loading,
-    totalIncome, totalExpenses, totalBalance, savings, savingsPercentage,
-    fetchTransactions, addTransaction, updateTransaction, deleteTransaction,
-    fetchCategories, fetchBudgets, fetchSubscriptions,
-    fetchInvestments, addInvestment, updateInvestment, deleteInvestment
-  }
-})
+      transactions.value =
+        transactions.value.filter(
+          t => t.id !== id
+        )
+    }
+
+    async function fetchCategories() {
+      const response =
+        await api.get(
+          '/categories'
+        )
+
+      categories.value =
+        response.data.data || []
+
+      return categories.value
+    }
+
+    async function fetchBudgets(month) {
+      const response =
+        await api.get(
+          '/budgets',
+          {
+            params: month
+              ? { month }
+              : {}
+          }
+        )
+
+      budgets.value =
+        (
+          response.data.data ||
+          []
+        ).map(b => ({
+          ...b,
+          id: b._id,
+          category:
+            b.categoryId === 'overall'
+              ? 'Overall'
+              : b.categoryId,
+          limit: Number(b.amount),
+          spent: Number(
+            b.spent || 0
+          ),
+          remaining: Number(
+            b.remaining ??
+              Math.max(
+                Number(b.amount) -
+                  Number(
+                    b.spent || 0
+                  ),
+                0
+              )
+          )
+        }))
+
+      return budgets.value
+    }
+
+    async function fetchSubscriptions() {
+      const response =
+        await api.get(
+          '/subscriptions'
+        )
+
+      subscriptions.value =
+        response.data.data || []
+
+      return subscriptions.value
+    }
+
+    async function fetchInvestments() {
+      const response =
+        await api.get(
+          '/investments'
+        )
+
+      investments.value =
+        response.data.data || []
+
+      investmentSummary.value =
+        response.data.summary || {
+          totalInvested: 0,
+          currentValue: 0,
+          totalProfitLoss: 0,
+          profitLossPercentage: 0
+        }
+
+      return investments.value
+    }
+
+    async function addInvestment(
+      investment
+    ) {
+      const response =
+        await api.post(
+          '/investments',
+          {
+            companyName:
+              investment.companyName,
+
+            symbol:
+              investment.symbol,
+
+            exchange:
+              investment.exchange,
+
+            quantity:
+              Number(investment.quantity),
+
+            buyPrice:
+              Number(investment.buyPrice),
+
+            purchaseDate:
+              investment.purchaseDate,
+
+            currentPrice:
+              Number(
+                investment.currentPrice
+              ),
+
+            ...(Array.isArray(
+              investment.priceHistory
+            ) &&
+            investment.priceHistory.some(
+              point =>
+                point?.date ||
+                (
+                  point?.price !== '' &&
+                  point?.price !== null &&
+                  point?.price !== undefined
+                )
+            )
+              ? {
+                  priceHistory:
+                    investment.priceHistory.map(
+                      point => ({
+                        date: point.date,
+                        price:
+                          Number(point.price)
+                      })
+                    )
+                }
+              : {})
+          }
+        )
+
+      await fetchInvestments()
+
+      return response.data.data
+    }
+
+    async function updateInvestment(
+      id,
+      investment
+    ) {
+      const response =
+        await api.patch(
+          `/investments/${id}`,
+          {
+            companyName:
+              investment.companyName,
+
+            symbol:
+              investment.symbol,
+
+            exchange:
+              investment.exchange,
+
+            quantity:
+              Number(investment.quantity),
+
+            buyPrice:
+              Number(investment.buyPrice),
+
+            purchaseDate:
+              investment.purchaseDate,
+
+            currentPrice:
+              Number(
+                investment.currentPrice
+              ),
+
+            ...(Array.isArray(
+              investment.priceHistory
+            ) &&
+            investment.priceHistory.some(
+              point =>
+                point?.date ||
+                (
+                  point?.price !== '' &&
+                  point?.price !== null &&
+                  point?.price !== undefined
+                )
+            )
+              ? {
+                  priceHistory:
+                    investment.priceHistory.map(
+                      point => ({
+                        date: point.date,
+                        price:
+                          Number(point.price)
+                      })
+                    )
+                }
+              : {})
+          }
+        )
+
+      await fetchInvestments()
+
+      return response.data.data
+    }
+
+    async function deleteInvestment(id) {
+      await api.delete(
+        `/investments/${id}`
+      )
+
+      await fetchInvestments()
+    }
+
+    return {
+      transactions,
+      categories,
+      budgets,
+      subscriptions,
+      investments,
+      investmentSummary,
+      loading,
+
+      totalIncome,
+      totalExpenses,
+      totalBalance,
+      savings,
+      savingsPercentage,
+
+      fetchTransactions,
+      addTransaction,
+      updateTransaction,
+      deleteTransaction,
+
+      fetchCategories,
+      fetchBudgets,
+      fetchSubscriptions,
+
+      fetchInvestments,
+      addInvestment,
+      updateInvestment,
+      deleteInvestment
+    }
+  })
